@@ -1,0 +1,11 @@
+{
+  "name": "@frontier/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Type contracts for the static data API published by the pipeline and consumed by the web app.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
