@@ -109,7 +109,7 @@ function makeCtx(mu: Vector, cov: Matrix, c: Constraints, l2 = 0): Ctx {
 }
 
 /** argmin_{w∈C} ½λ wᵀΣw − μᵀw + γ‖w − w̄‖² (λ = Infinity ⇒ global minimum variance). */
-function solveMV(ctx: Ctx, lambda: number, x0: Vector): Vector {
+function solveMV(ctx: Ctx, lambda: number, x0: Vector, tol = 1e-12): Vector {
   const { cov, project, l2, ref } = ctx;
   const gmv = !Number.isFinite(lambda);
   const lam = gmv ? 1 : lambda;
@@ -124,7 +124,7 @@ function solveMV(ctx: Ctx, lambda: number, x0: Vector): Vector {
     return Sw.map((v, i) => lam * v - mu[i] + 2 * l2 * (w[i] - ref[i]));
   };
   const L = lam * ctx.lmax + 2 * l2;
-  return minimizeProjected(f, grad, project, x0, { lipschitz: L, tol: 1e-12, maxIter: 20_000 }).x;
+  return minimizeProjected(f, grad, project, x0, { lipschitz: L, tol, maxIter: tol < 1e-11 ? 20_000 : 6_000 }).x;
 }
 
 /** Highest-return feasible portfolio (an LP; greedy is exact without group constraints). */
@@ -180,10 +180,10 @@ export function efficientFrontier(
   return traceFrontier(ctx, opts.points ?? 50, opts.riskFree ?? 0);
 }
 
-function traceFrontier(ctx: Ctx, points: number, rf: number): FrontierPoint[] {
+function traceFrontier(ctx: Ctx, points: number, rf: number, tol = 1e-12): FrontierPoint[] {
   const scale = lambdaScale(ctx);
   const out: FrontierPoint[] = [];
-  let w = solveMV(ctx, Infinity, ctx.ref);
+  let w = solveMV(ctx, Infinity, ctx.ref, tol);
   const push = (lambda: number, weights: Vector) => {
     const s = stats(ctx, weights, rf);
     out.push({ lambda, ret: s.r, vol: s.v, sharpe: s.s, weights });
@@ -194,7 +194,7 @@ function traceFrontier(ctx: Ctx, points: number, rf: number): FrontierPoint[] {
   const lo = Math.log(scale * 1e-3);
   for (let k = 0; k < points; k++) {
     const lambda = Math.exp(hi + ((lo - hi) * k) / (points - 1));
-    w = solveMV(ctx, lambda, w);
+    w = solveMV(ctx, lambda, w, tol);
     push(lambda, w);
   }
   push(0, maxReturnPortfolio(ctx));
@@ -213,7 +213,8 @@ function traceFrontier(ctx: Ctx, points: number, rf: number): FrontierPoint[] {
 /** Golden-section search for the tangency portfolio along the λ-path. */
 function maxSharpeOnPath(ctx: Ctx, rf: number): { w: Vector; warnings: string[] } {
   const warnings: string[] = [];
-  const frontier = traceFrontier(ctx, 24, rf);
+  // Coarse bracket (10 warm-started solves), then golden-section refinement.
+  const frontier = traceFrontier(ctx, 10, rf, 1e-10);
   if (frontier.every((p) => p.ret <= rf)) {
     warnings.push('No portfolio is expected to beat the risk-free rate, so Sharpe is undefined — showing minimum variance instead.');
     return { w: frontier[0].weights, warnings };
@@ -230,7 +231,7 @@ function maxSharpeOnPath(ctx: Ctx, rf: number): { w: Vector; warnings: string[] 
   let best = frontier[k];
   let warm = best.weights;
   const evalAt = (t: number) => {
-    const w = solveMV(ctx, Math.exp(t), warm);
+    const w = solveMV(ctx, Math.exp(t), warm, 1e-11);
     warm = w;
     const s = stats(ctx, w, rf);
     if (s.s > best.sharpe) best = { lambda: Math.exp(t), ret: s.r, vol: s.v, sharpe: s.s, weights: w };
@@ -241,7 +242,8 @@ function maxSharpeOnPath(ctx: Ctx, rf: number): { w: Vector; warnings: string[] 
   let d = a + g * (b - a);
   let fc = evalAt(c);
   let fd = evalAt(d);
-  for (let it = 0; it < 60 && Math.abs(b - a) > 1e-6; it++) {
+  // Sharpe is flat at its peak, so a 1e-4 bracket in log λ is far below visible error.
+  for (let it = 0; it < 60 && Math.abs(b - a) > 1e-4; it++) {
     if (fc > fd) {
       b = d;
       d = c;

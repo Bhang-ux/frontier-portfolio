@@ -14,7 +14,8 @@ const nf = (digits: number, locale = 'en-US') =>
 
 export function pct(x: number | null | undefined, digits = 1): string {
   if (x === null || x === undefined || !Number.isFinite(x)) return '—';
-  return `${nf(digits).format(x * 100)}%`;
+  // U+2212 minus everywhere so negatives align with signedPct output.
+  return `${nf(digits).format(x * 100)}%`.replace(/^-/, '−');
 }
 
 export function signedPct(x: number | null | undefined, digits = 1): string {
@@ -111,7 +112,9 @@ export function explainBeta(beta: number, benchmark = 'the market'): Explanation
 
 export function explainCagr(cagr: number, years: number, amount = 10_000, currency: Currency = 'USD'): Explanation {
   const end = amount * Math.pow(1 + cagr, years);
-  return { text: `Grew ${pct(cagr)} a year on average — ${money(amount, currency, 0)} invested ${years >= 1 ? `${number(years, 0)} years` : 'a year'} ago would be about ${money(end, currency, 0)} today.` };
+  const ago = years < 1.5 ? 'a year' : `${number(years, 0)} years`;
+  const verb = cagr >= 0 ? 'Grew' : 'Shrank';
+  return { text: `${verb} ${pct(Math.abs(cagr))} a year on average — ${money(amount, currency, 0)} invested ${ago} ago would be about ${money(end, currency, 0)} today.` };
 }
 
 export function explainCorrelation(rho: number): Explanation {
