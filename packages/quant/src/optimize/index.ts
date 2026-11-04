@@ -124,7 +124,8 @@ function solveMV(ctx: Ctx, lambda: number, x0: Vector, tol = 1e-12): Vector {
     return Sw.map((v, i) => lam * v - mu[i] + 2 * l2 * (w[i] - ref[i]));
   };
   const L = lam * ctx.lmax + 2 * l2;
-  return minimizeProjected(f, grad, project, x0, { lipschitz: L, tol, maxIter: tol < 1e-11 ? 20_000 : 6_000 }).x;
+  return minimizeProjected(f, grad, project, x0, { lipschitz: L, tol, maxIter: tol < 1e-11 ? 20_000 : 6_000 })
+    .x;
 }
 
 /** Highest-return feasible portfolio (an LP; greedy is exact without group constraints). */
@@ -216,7 +217,9 @@ function maxSharpeOnPath(ctx: Ctx, rf: number): { w: Vector; warnings: string[] 
   // Coarse bracket (10 warm-started solves), then golden-section refinement.
   const frontier = traceFrontier(ctx, 10, rf, 1e-10);
   if (frontier.every((p) => p.ret <= rf)) {
-    warnings.push('No portfolio is expected to beat the risk-free rate, so Sharpe is undefined — showing minimum variance instead.');
+    warnings.push(
+      'No portfolio is expected to beat the risk-free rate, so Sharpe is undefined — showing minimum variance instead.',
+    );
     return { w: frontier[0].weights, warnings };
   }
   let k = 0;
@@ -262,7 +265,12 @@ function maxSharpeOnPath(ctx: Ctx, rf: number): { w: Vector; warnings: string[] 
 }
 
 /** Find λ so that a monotone (decreasing in λ) frontier statistic hits a target. */
-function solveForTarget(ctx: Ctx, target: number, which: 'ret' | 'vol', rf: number): { w: Vector; warnings: string[] } {
+function solveForTarget(
+  ctx: Ctx,
+  target: number,
+  which: 'ret' | 'vol',
+  rf: number,
+): { w: Vector; warnings: string[] } {
   const warnings: string[] = [];
   const gmv = solveMV(ctx, Infinity, ctx.ref);
   const top = maxReturnPortfolio(ctx);
@@ -384,7 +392,8 @@ function finalize(
 ): OptimizeResult {
   const clean = w.map((x) => (Math.abs(x) < 1e-10 ? 0 : x));
   const viol = constraintViolation(clean, ctx.constraints);
-  if (viol > 1e-6) warnings.push('Some constraints could not be met exactly; the closest feasible portfolio is shown.');
+  if (viol > 1e-6)
+    warnings.push('Some constraints could not be met exactly; the closest feasible portfolio is shown.');
   const s = stats(ctx, clean, rf);
   const rc = riskContributions(clean, ctx.cov);
   return {
@@ -415,7 +424,9 @@ export function optimize(req: OptimizeRequest): OptimizeResult {
   const respect = (w: Vector, what: string) => {
     const projected = ctx.project(w);
     if (constraintViolation(w, c) > 1e-6) {
-      warnings.push(`${what} was adjusted to respect your weight limits, so risk is no longer split exactly evenly.`);
+      warnings.push(
+        `${what} was adjusted to respect your weight limits, so risk is no longer split exactly evenly.`,
+      );
       return projected;
     }
     return w;
@@ -425,7 +436,16 @@ export function optimize(req: OptimizeRequest): OptimizeResult {
     case 'equal-weight':
       return finalize(req.objective, ctx.project(new Array<number>(n).fill(c.total / n)), ctx, rf, warnings);
     case 'inverse-volatility':
-      return finalize(req.objective, respect(inverseVolatility(req.cov).map((x) => x * c.total), 'Inverse-volatility'), ctx, rf, warnings);
+      return finalize(
+        req.objective,
+        respect(
+          inverseVolatility(req.cov).map((x) => x * c.total),
+          'Inverse-volatility',
+        ),
+        ctx,
+        rf,
+        warnings,
+      );
     case 'min-variance':
       return finalize(req.objective, solveMV(ctx, Infinity, ctx.ref), ctx, rf, warnings);
     case 'max-utility': {
@@ -454,17 +474,37 @@ export function optimize(req: OptimizeRequest): OptimizeResult {
     }
     case 'risk-parity': {
       const rb = riskBudgeting(req.cov, req.budgets);
-      return finalize(req.objective, respect(rb.weights.map((x) => x * c.total), 'Risk parity'), ctx, rf, warnings);
+      return finalize(
+        req.objective,
+        respect(
+          rb.weights.map((x) => x * c.total),
+          'Risk parity',
+        ),
+        ctx,
+        rf,
+        warnings,
+      );
     }
     case 'hrp': {
       const h = hierarchicalRiskParity(req.cov, req.corr);
-      return finalize(req.objective, respect(h.weights.map((x) => x * c.total), 'HRP'), ctx, rf, warnings, {
-        linkage: h.linkage,
-        order: h.order,
-      });
+      return finalize(
+        req.objective,
+        respect(
+          h.weights.map((x) => x * c.total),
+          'HRP',
+        ),
+        ctx,
+        rf,
+        warnings,
+        {
+          linkage: h.linkage,
+          order: h.order,
+        },
+      );
     }
     case 'min-cvar': {
-      if (!req.scenarios || req.scenarios.length < 30) throw new Error('min-cvar needs at least 30 return scenarios');
+      if (!req.scenarios || req.scenarios.length < 30)
+        throw new Error('min-cvar needs at least 30 return scenarios');
       const r = minCvar(ctx, req.scenarios, req.cvarConfidence ?? 0.95);
       return finalize(req.objective, r.w, ctx, rf, warnings, { cvar: r.cvar });
     }

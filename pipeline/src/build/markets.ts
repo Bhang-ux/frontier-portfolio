@@ -78,7 +78,7 @@ function spreadSeries(a: Series, b: Series, days: number): number[] {
     bAt.push(b.dates[j] <= a.dates[i] ? b.values[j] : NaN);
   }
   for (let i = days; i < a.values.length; i++) {
-    out.push(a.values[i] / a.values[i - days] - (bAt[i] / bAt[i - days]));
+    out.push(a.values[i] / a.values[i - days] - bAt[i] / bAt[i - days]);
   }
   return out;
 }
@@ -99,7 +99,12 @@ export function moodFor(spec: MoodSpec, universe: Universe): MoodInfo | null {
   if (vix) {
     const p = latestPercentile(vix.series.values, 252);
     if (p !== null)
-      comps.push({ key: 'volatility', label: 'Volatility', score: Math.round(100 * (1 - p)), detail: `${vix.meta.short} at ${explain.number(vix.quote.price, 1)} — ${p < 0.5 ? 'calmer' : 'more fearful'} than ${Math.round(100 * (p < 0.5 ? 1 - p : p))}% of the past year.` });
+      comps.push({
+        key: 'volatility',
+        label: 'Volatility',
+        score: Math.round(100 * (1 - p)),
+        detail: `${vix.meta.short} at ${explain.number(vix.quote.price, 1)} — ${p < 0.5 ? 'calmer' : 'more fearful'} than ${Math.round(100 * (p < 0.5 ? 1 - p : p))}% of the past year.`,
+      });
   }
   const idx = universe.get(spec.index);
   if (idx) {
@@ -108,16 +113,31 @@ export function moodFor(spec: MoodSpec, universe: Universe): MoodInfo | null {
     const p = latestPercentile(gaps, 504);
     const g = gaps[gaps.length - 1];
     if (p !== null && Number.isFinite(g))
-      comps.push({ key: 'momentum', label: 'Momentum', score: Math.round(100 * p), detail: `${idx.meta.short} is ${explain.pct(Math.abs(g))} ${g >= 0 ? 'above' : 'below'} its 125-day average.` });
+      comps.push({
+        key: 'momentum',
+        label: 'Momentum',
+        score: Math.round(100 * p),
+        detail: `${idx.meta.short} is ${explain.pct(Math.abs(g))} ${g >= 0 ? 'above' : 'below'} its 125-day average.`,
+      });
   }
   const withTech = spec.members.filter((m) => m.tech);
   if (withTech.length >= 5) {
     const above = withTech.filter((m) => m.tech!.aboveSma50).length / withTech.length;
-    comps.push({ key: 'breadth', label: 'Breadth', score: Math.round(100 * above), detail: `${Math.round(100 * above)}% of tracked stocks trade above their 50-day average.` });
+    comps.push({
+      key: 'breadth',
+      label: 'Breadth',
+      score: Math.round(100 * above),
+      detail: `${Math.round(100 * above)}% of tracked stocks trade above their 50-day average.`,
+    });
     const highs = withTech.filter((m) => m.tech!.fromHigh52 > -0.03).length;
     const lows = withTech.filter((m) => m.tech!.price <= m.tech!.low52 * 1.03).length;
     const net = (highs - lows) / withTech.length;
-    comps.push({ key: 'highs-lows', label: 'New highs vs lows', score: Math.round(50 + 50 * net), detail: `${highs} near 52-week highs vs ${lows} near 52-week lows.` });
+    comps.push({
+      key: 'highs-lows',
+      label: 'New highs vs lows',
+      score: Math.round(50 + 50 * net),
+      detail: `${highs} near 52-week highs vs ${lows} near 52-week lows.`,
+    });
   }
   if (spec.riskOn && spec.safeHaven) {
     const a = universe.get(spec.riskOn);
@@ -127,7 +147,12 @@ export function moodFor(spec: MoodSpec, universe: Universe): MoodInfo | null {
       const p = latestPercentile(sp, 504);
       const last = sp[sp.length - 1];
       if (p !== null && Number.isFinite(last))
-        comps.push({ key: 'safe-haven', label: 'Safe-haven demand', score: Math.round(100 * p), detail: `${a.meta.short} ${last >= 0 ? 'beat' : 'lagged'} ${b.meta.short} by ${explain.pct(Math.abs(last))} over 20 trading days.` });
+        comps.push({
+          key: 'safe-haven',
+          label: 'Safe-haven demand',
+          score: Math.round(100 * p),
+          detail: `${a.meta.short} ${last >= 0 ? 'beat' : 'lagged'} ${b.meta.short} by ${explain.pct(Math.abs(last))} over 20 trading days.`,
+        });
     }
   }
   if (spec.junk) {
@@ -136,12 +161,24 @@ export function moodFor(spec: MoodSpec, universe: Universe): MoodInfo | null {
     if (a && b) {
       const sp = spreadSeries(a.series, b.series, 20);
       const p = latestPercentile(sp, 504);
-      if (p !== null) comps.push({ key: 'junk', label: 'Junk-bond appetite', score: Math.round(100 * p), detail: `High-yield bonds ${sp[sp.length - 1] >= 0 ? 'outperforming' : 'underperforming'} Treasuries over 20 trading days.` });
+      if (p !== null)
+        comps.push({
+          key: 'junk',
+          label: 'Junk-bond appetite',
+          score: Math.round(100 * p),
+          detail: `High-yield bonds ${sp[sp.length - 1] >= 0 ? 'outperforming' : 'underperforming'} Treasuries over 20 trading days.`,
+        });
     }
   }
   if (comps.length < 3) return null;
   const score = Math.round(comps.reduce((s, c) => s + c.score, 0) / comps.length);
-  return { market: spec.market, score, label: explain.moodLabel(score).label, components: comps, text: explain.explainMood(score, spec.market) };
+  return {
+    market: spec.market,
+    score,
+    label: explain.moodLabel(score).label,
+    components: comps,
+    text: explain.explainMood(score, spec.market),
+  };
 }
 
 export function breadthFor(members: AnalyzedAsset[]): MarketSummary['breadth'] {
@@ -155,10 +192,26 @@ export function breadthFor(members: AnalyzedAsset[]): MarketSummary['breadth'] {
   };
 }
 
-export function headlineFor(name: string, idx: AnalyzedAsset | undefined, regime: RegimeInfo | null, mood: MoodInfo | null): string {
+export function headlineFor(
+  name: string,
+  idx: AnalyzedAsset | undefined,
+  regime: RegimeInfo | null,
+  mood: MoodInfo | null,
+): string {
   if (!idx) return `${name}: data unavailable.`;
   const m1 = idx.stats.returns.m1;
-  const dir = m1 === null ? 'steady' : m1 > 0.03 ? 'rising strongly' : m1 > 0.005 ? 'edging higher' : m1 < -0.03 ? 'falling sharply' : m1 < -0.005 ? 'drifting lower' : 'flat';
+  const dir =
+    m1 === null
+      ? 'steady'
+      : m1 > 0.03
+        ? 'rising strongly'
+        : m1 > 0.005
+          ? 'edging higher'
+          : m1 < -0.03
+            ? 'falling sharply'
+            : m1 < -0.005
+              ? 'drifting lower'
+              : 'flat';
   const calm = regime ? (regime.current === 'calm' ? 'calm' : 'turbulent') : null;
   const moodTxt = mood ? `; sentiment: ${mood.label.toLowerCase()}` : '';
   return `${name} stocks are ${calm ? `${calm} and ` : ''}${dir} (${explain.signedPct(m1)} over the past month)${moodTxt}.`;

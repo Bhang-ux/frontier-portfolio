@@ -38,17 +38,47 @@ export const FACTORS: Record<Currency, FactorDef[]> = {
 
 export const SHOCKS: Record<Currency, { id: string; name: string; shock: number; summary: string }[]> = {
   USD: [
-    { id: 'SPY', name: 'US stocks fall 20%', shock: -0.2, summary: 'A typical bear-market decline in the S&P 500.' },
-    { id: 'TLT', name: 'Interest rates jump', shock: -0.15, summary: 'Long-term Treasuries drop 15%, as in 2022.' },
-    { id: 'GLD', name: 'Gold slumps 15%', shock: -0.15, summary: 'Gold loses its shine in a strong-dollar boom.' },
-    { id: 'BTC-USD', name: 'Crypto crash', shock: -0.5, summary: 'Bitcoin halves — it has done so several times.' },
+    {
+      id: 'SPY',
+      name: 'US stocks fall 20%',
+      shock: -0.2,
+      summary: 'A typical bear-market decline in the S&P 500.',
+    },
+    {
+      id: 'TLT',
+      name: 'Interest rates jump',
+      shock: -0.15,
+      summary: 'Long-term Treasuries drop 15%, as in 2022.',
+    },
+    {
+      id: 'GLD',
+      name: 'Gold slumps 15%',
+      shock: -0.15,
+      summary: 'Gold loses its shine in a strong-dollar boom.',
+    },
+    {
+      id: 'BTC-USD',
+      name: 'Crypto crash',
+      shock: -0.5,
+      summary: 'Bitcoin halves — it has done so several times.',
+    },
     { id: 'NIFTYBEES.NS', name: 'Indian stocks fall 20%', shock: -0.2, summary: 'A sharp Nifty sell-off.' },
   ],
   INR: [
-    { id: 'NIFTYBEES.NS', name: 'Indian stocks fall 20%', shock: -0.2, summary: 'A sharp Nifty sell-off, like early 2020.' },
+    {
+      id: 'NIFTYBEES.NS',
+      name: 'Indian stocks fall 20%',
+      shock: -0.2,
+      summary: 'A sharp Nifty sell-off, like early 2020.',
+    },
     { id: 'SPY', name: 'US stocks fall 20%', shock: -0.2, summary: 'A US bear market, measured in rupees.' },
     { id: 'GOLDBEES.NS', name: 'Gold slumps 15%', shock: -0.15, summary: 'Gold prices fall in rupee terms.' },
-    { id: 'USDINR', name: 'Rupee strengthens 10%', shock: -0.1, summary: 'The dollar falls 10% against the rupee — bad for US holdings.' },
+    {
+      id: 'USDINR',
+      name: 'Rupee strengthens 10%',
+      shock: -0.1,
+      summary: 'The dollar falls 10% against the rupee — bad for US holdings.',
+    },
     { id: 'BTC-USD', name: 'Crypto crash', shock: -0.5, summary: 'Bitcoin halves.' },
   ],
 };
@@ -59,10 +89,19 @@ export function normalized(holdings: Holding[]): Holding[] {
   return s > 0 ? pos.map((h) => ({ ...h, weight: h.weight / s })) : pos;
 }
 
-export const assetInfo = (a: AssetSnapshot): AssetInfo => ({ id: a.meta.id, name: a.meta.short, assetClass: a.meta.assetClass, region: a.meta.region });
+export const assetInfo = (a: AssetSnapshot): AssetInfo => ({
+  id: a.meta.id,
+  name: a.meta.short,
+  assetClass: a.meta.assetClass,
+  region: a.meta.region,
+});
 
 /** Load histories for `ids` (+ USD/INR when needed) and package them for the worker. */
-export function useSeriesInputs(ids: string[], assets: Map<string, AssetSnapshot> | undefined, base: Currency) {
+export function useSeriesInputs(
+  ids: string[],
+  assets: Map<string, AssetSnapshot> | undefined,
+  base: Currency,
+) {
   const needFx = ids.some((id) => assets?.get(id)?.meta.currency !== base);
   const all = useMemo(() => [...new Set([...ids, ...(needFx ? ['USDINR'] : [])])], [ids, needFx]);
   const h = useHistories(all);
@@ -74,7 +113,13 @@ export function useSeriesInputs(ids: string[], assets: Map<string, AssetSnapshot
       if (s && a) inputs[id] = { id, currency: a.meta.currency, series: s };
     }
     const ready = ids.every((id) => inputs[id]) && (!needFx || !!h.data.USDINR);
-    return { inputs, fx: needFx ? (h.data.USDINR as Series | undefined) : undefined, ready, isLoading: h.isLoading, error: h.error };
+    return {
+      inputs,
+      fx: needFx ? (h.data.USDINR as Series | undefined) : undefined,
+      ready,
+      isLoading: h.isLoading,
+      error: h.error,
+    };
   }, [h.data, h.isLoading, h.error, ids, assets, needFx]);
 }
 
@@ -87,7 +132,12 @@ interface SharedPayload {
 }
 
 export function encodePortfolio(p: Portfolio): string {
-  const payload: SharedPayload = { n: p.name, c: p.currency, a: Math.round(p.amount), h: p.holdings.map((h) => [h.id, Math.round(h.weight * 10000) / 10000]) };
+  const payload: SharedPayload = {
+    n: p.name,
+    c: p.currency,
+    a: Math.round(p.amount),
+    h: p.holdings.map((h) => [h.id, Math.round(h.weight * 10000) / 10000]),
+  };
   return compressToEncodedURIComponent(JSON.stringify(payload));
 }
 
@@ -97,9 +147,18 @@ export function decodePortfolio(code: string): Omit<Portfolio, 'id' | 'createdAt
     if (!raw) return null;
     const d = JSON.parse(raw) as SharedPayload;
     if (!Array.isArray(d.h) || (d.c !== 'USD' && d.c !== 'INR')) return null;
-    const holdings = d.h.filter(([id, w]) => typeof id === 'string' && Number.isFinite(w) && w > 0).slice(0, 40).map(([id, weight]) => ({ id, weight }));
+    const holdings = d.h
+      .filter(([id, w]) => typeof id === 'string' && Number.isFinite(w) && w > 0)
+      .slice(0, 40)
+      .map(([id, weight]) => ({ id, weight }));
     if (!holdings.length) return null;
-    return { name: String(d.n ?? 'Shared portfolio').slice(0, 80), currency: d.c, amount: Number.isFinite(d.a) && d.a > 0 ? d.a : 10000, holdings, origin: 'shared' };
+    return {
+      name: String(d.n ?? 'Shared portfolio').slice(0, 80),
+      currency: d.c,
+      amount: Number.isFinite(d.a) && d.a > 0 ? d.a : 10000,
+      holdings,
+      origin: 'shared',
+    };
   } catch {
     return null;
   }

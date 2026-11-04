@@ -26,7 +26,15 @@ import {
 
 describe('Monte Carlo', () => {
   it('zero volatility reproduces the closed-form SIP future value', () => {
-    const r = monteCarlo({ method: 'gbm', mu: 0.12, sigma: 1e-9, years: 10, initial: 1000, monthlyContribution: 100, paths: 200 });
+    const r = monteCarlo({
+      method: 'gbm',
+      mu: 0.12,
+      sigma: 1e-9,
+      years: 10,
+      initial: 1000,
+      monthlyContribution: 100,
+      paths: 200,
+    });
     // GBM with E[1+r] = 1 + μ/12 per month equals a 12 %/yr nominal (monthly-compounded) SIP
     const monthly = 0.12 / 12;
     let fv = 1000;
@@ -36,13 +44,30 @@ describe('Monte Carlo', () => {
     expect(r.totalInvested).toBe(1000 + 120 * 100);
   });
   it('lognormal median CAGR ≈ μ − σ²/2', () => {
-    const r = monteCarlo({ method: 'gbm', mu: 0.08, sigma: 0.2, years: 30, initial: 1, paths: 20000, seed: 3 });
+    const r = monteCarlo({
+      method: 'gbm',
+      mu: 0.08,
+      sigma: 0.2,
+      years: 30,
+      initial: 1,
+      paths: 20000,
+      seed: 3,
+    });
     expect(r.medianCagr).toBeCloseTo(Math.exp(0.08 - 0.02) - 1, 2);
     expect(r.bands.p5[360]).toBeLessThan(r.bands.p50[360]);
     expect(r.bands.p50[360]).toBeLessThan(r.bands.p95[360]);
   });
   it('is reproducible with a seed and probability of goal is monotone in the goal', () => {
-    const base = { method: 'student-t' as const, mu: 0.1, sigma: 0.18, years: 15, initial: 10000, monthlyContribution: 500, paths: 3000, seed: 42 };
+    const base = {
+      method: 'student-t' as const,
+      mu: 0.1,
+      sigma: 0.18,
+      years: 15,
+      initial: 10000,
+      monthlyContribution: 500,
+      paths: 3000,
+      seed: 42,
+    };
     const a = monteCarlo({ ...base, goal: 150000 });
     const b = monteCarlo({ ...base, goal: 150000 });
     const c = monteCarlo({ ...base, goal: 300000 });
@@ -52,7 +77,15 @@ describe('Monte Carlo', () => {
   it('bootstrap resamples history and withdrawals can deplete', () => {
     const rng = createRng(1);
     const hist = Array.from({ length: 120 }, () => 0.006 + 0.04 * rng.normal());
-    const r = monteCarlo({ method: 'bootstrap', monthlyReturns: hist, years: 30, initial: 100000, monthlyWithdrawal: 1500, withdrawalStartYear: 0, paths: 2000 });
+    const r = monteCarlo({
+      method: 'bootstrap',
+      monthlyReturns: hist,
+      years: 30,
+      initial: 100000,
+      monthlyWithdrawal: 1500,
+      withdrawalStartYear: 0,
+      paths: 2000,
+    });
     expect(r.probDepletion).toBeGreaterThan(0);
     expect(r.probDepletion).toBeLessThan(1);
   });
@@ -101,10 +134,30 @@ describe('technical signals', () => {
 });
 
 describe('portfolio health', () => {
-  const base = { names: ['A', 'B', 'C', 'D'], assetClasses: ['equity', 'equity', 'bond', 'commodity'], sharpe: 0.8, volatility: 0.12, maxDrawdown: 0.18, enb: 3.5, avgCorrelation: 0.2 };
+  const base = {
+    names: ['A', 'B', 'C', 'D'],
+    assetClasses: ['equity', 'equity', 'bond', 'commodity'],
+    sharpe: 0.8,
+    volatility: 0.12,
+    maxDrawdown: 0.18,
+    enb: 3.5,
+    avgCorrelation: 0.2,
+  };
   it('a diversified mix scores higher than a concentrated one', () => {
-    const good = portfolioHealth({ ...base, weights: [0.3, 0.3, 0.3, 0.1], riskShare: [0.35, 0.35, 0.2, 0.1] });
-    const bad = portfolioHealth({ ...base, weights: [0.85, 0.05, 0.05, 0.05], riskShare: [0.95, 0.03, 0.01, 0.01], enb: 1.2, avgCorrelation: 0.8, maxDrawdown: 0.55, sharpe: 0.2 });
+    const good = portfolioHealth({
+      ...base,
+      weights: [0.3, 0.3, 0.3, 0.1],
+      riskShare: [0.35, 0.35, 0.2, 0.1],
+    });
+    const bad = portfolioHealth({
+      ...base,
+      weights: [0.85, 0.05, 0.05, 0.05],
+      riskShare: [0.95, 0.03, 0.01, 0.01],
+      enb: 1.2,
+      avgCorrelation: 0.8,
+      maxDrawdown: 0.55,
+      sharpe: 0.2,
+    });
     expect(good.score).toBeGreaterThan(bad.score + 25);
     expect(bad.suggestions.length).toBeGreaterThan(0);
     expect(bad.suggestions.join(' ')).toMatch(/A is 85%/);
@@ -118,10 +171,13 @@ describe('stress testing', () => {
     const covid = HISTORICAL_SCENARIOS.find((s) => s.id === 'covid-2020')!;
     const spx = { dates: [d('2020-02-14'), d('2020-02-19'), d('2020-03-23')], values: [100, 100, 66] };
     const young = { dates: [d('2021-01-04')], values: [10] };
-    const r = historicalStress([
-      { id: 'SPY', weight: 0.5, series: spx },
-      { id: 'NEW', weight: 0.5, series: young, proxy: spx },
-    ], covid);
+    const r = historicalStress(
+      [
+        { id: 'SPY', weight: 0.5, series: spx },
+        { id: 'NEW', weight: 0.5, series: young, proxy: spx },
+      ],
+      covid,
+    );
     expect(r.portfolioReturn).toBeCloseTo(-0.34, 10);
     expect(r.coverage).toBeCloseTo(0.5, 12);
     expect(r.totalCoverage).toBeCloseTo(1, 12);
@@ -130,7 +186,11 @@ describe('stress testing', () => {
   it('hypothetical shock scales by beta', () => {
     const rng = createRng(6);
     const drv = Array.from({ length: 150 }, () => 0.02 * rng.normal());
-    const r = hypotheticalShock([{ id: 'X', weight: 1, weeklyReturns: drv.map((v) => 1.5 * v + 0.001 * rng.normal()) }], drv, -0.2);
+    const r = hypotheticalShock(
+      [{ id: 'X', weight: 1, weeklyReturns: drv.map((v) => 1.5 * v + 0.001 * rng.normal()) }],
+      drv,
+      -0.2,
+    );
     expect(r.portfolioImpact).toBeCloseTo(-0.3, 2);
   });
 });
@@ -141,7 +201,14 @@ describe('factor regression', () => {
     const mkt = Array.from({ length: 600 }, () => 0.01 * rng.normal());
     const size = Array.from({ length: 600 }, () => 0.005 * rng.normal());
     const y = mkt.map((m, t) => 1.2 * m - 0.4 * size[t] + 0.002 * rng.normal());
-    const r = factorRegression(y, [{ key: 'mkt', label: 'Market', returns: mkt }, { key: 'smb', label: 'Size', returns: size }], { periodsPerYear: 252 });
+    const r = factorRegression(
+      y,
+      [
+        { key: 'mkt', label: 'Market', returns: mkt },
+        { key: 'smb', label: 'Size', returns: size },
+      ],
+      { periodsPerYear: 252 },
+    );
     expect(r.exposures[0].beta).toBeCloseTo(1.2, 1);
     expect(r.exposures[1].beta).toBeCloseTo(-0.4, 1);
     expect(r.rSquared).toBeGreaterThan(0.9);
@@ -151,7 +218,10 @@ describe('factor regression', () => {
 
 describe('return models', () => {
   it('Black–Litterman with no views returns the prior; 100% confidence hits the view', () => {
-    const cov = [[0.04, 0.01], [0.01, 0.09]];
+    const cov = [
+      [0.04, 0.01],
+      [0.01, 0.09],
+    ];
     const prior = [0.05, 0.07];
     expect(blackLitterman({ cov, prior, views: [] }).posteriorReturns).toEqual(prior);
     const r = blackLitterman({ cov, prior, views: [{ pick: [1, 0], value: 0.12, confidence: 1 }] });
@@ -159,7 +229,9 @@ describe('return models', () => {
   });
   it('Bayes–Stein shrinks dispersion of means', () => {
     const rng = createRng(8);
-    const X = Array.from({ length: 250 }, () => Array.from({ length: 6 }, (_, i) => 0.0003 * i + 0.01 * rng.normal()));
+    const X = Array.from({ length: 250 }, () =>
+      Array.from({ length: 6 }, (_, i) => 0.0003 * i + 0.01 * rng.normal()),
+    );
     const bs = bayesSteinMean(X, 252);
     expect(bs.shrinkage).toBeGreaterThan(0);
     expect(bs.shrinkage).toBeLessThanOrEqual(1);
@@ -168,7 +240,11 @@ describe('return models', () => {
 
 describe('risk decomposition', () => {
   it('ENB is 1 for one asset and n for uncorrelated equal-risk assets', () => {
-    const I = [[0.04, 0, 0], [0, 0.04, 0], [0, 0, 0.04]];
+    const I = [
+      [0.04, 0, 0],
+      [0, 0.04, 0],
+      [0, 0, 0.04],
+    ];
     expect(effectiveNumberOfBets([1, 0, 0], I).enb).toBeCloseTo(1, 10);
     expect(effectiveNumberOfBets([1 / 3, 1 / 3, 1 / 3], I).enb).toBeCloseTo(3, 10);
     expect(diversificationRatio([1 / 3, 1 / 3, 1 / 3], I)).toBeCloseTo(Math.sqrt(3), 10);

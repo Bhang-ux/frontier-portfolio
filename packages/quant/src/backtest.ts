@@ -145,12 +145,22 @@ export function walkForward(req: WalkForwardRequest): WalkForwardResult {
   const T = dates.length;
   const n = prices[0]?.length ?? 0;
   const cost = (req.costBps ?? 10) / 10_000;
-  const starts = periodStartIndices(dates, req.rebalance === 'monthly' ? 'M' : 'Q').filter((t) => t >= req.lookback);
-  if (starts.length < 2) throw new Error('Not enough history for a walk-forward test — shorten the lookback.');
+  const starts = periodStartIndices(dates, req.rebalance === 'monthly' ? 'M' : 'Q').filter(
+    (t) => t >= req.lookback,
+  );
+  if (starts.length < 2)
+    throw new Error('Not enough history for a walk-forward test — shorten the lookback.');
   const ppy = periodsPerYearFromDates(dates);
   const t0 = starts[0];
   const outDates = dates.slice(t0);
-  const curves = req.strategies.map((s) => ({ spec: s, value: 1, units: new Array<number>(n).fill(0), equity: [] as number[], turnover: 0, count: 0 }));
+  const curves = req.strategies.map((s) => ({
+    spec: s,
+    value: 1,
+    units: new Array<number>(n).fill(0),
+    equity: [] as number[],
+    turnover: 0,
+    count: 0,
+  }));
   const startSet = new Set(starts);
   for (let t = t0; t < T; t++) {
     const p = prices[t];

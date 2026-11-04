@@ -36,9 +36,20 @@ export default defineConfig({
         navigateFallbackDenylist: [/\/data\//],
         runtimeCaching: [
           // The manifest is the "what changed?" pointer: always try the network first.
-          { urlPattern: /\/data\/manifest\.json/, handler: 'NetworkFirst', options: { cacheName: 'frontier-manifest', networkTimeoutSeconds: 4 } },
+          {
+            urlPattern: /\/data\/manifest\.json/,
+            handler: 'NetworkFirst',
+            options: { cacheName: 'frontier-manifest', networkTimeoutSeconds: 4 },
+          },
           // Everything else under /data is content-addressed (?v=hash) ⇒ cache-first is safe.
-          { urlPattern: /\/data\/.*\.json/, handler: 'CacheFirst', options: { cacheName: 'frontier-data', expiration: { maxEntries: 400, maxAgeSeconds: 7 * 86400 } } },
+          {
+            urlPattern: /\/data\/.*\.json/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'frontier-data',
+              expiration: { maxEntries: 400, maxAgeSeconds: 7 * 86400 },
+            },
+          },
         ],
       },
     }),
@@ -54,7 +65,15 @@ export default defineConfig({
         manualChunks: {
           react: ['react', 'react-dom', 'react-router'],
           viz: ['d3-scale', 'd3-shape', 'd3-array', 'd3-hierarchy'],
-          ui: ['motion', '@radix-ui/react-popover', '@radix-ui/react-dialog', '@radix-ui/react-slider', '@radix-ui/react-tooltip', 'cmdk', 'sonner'],
+          ui: [
+            'motion',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-slider',
+            '@radix-ui/react-tooltip',
+            'cmdk',
+            'sonner',
+          ],
         },
       },
     },

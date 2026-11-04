@@ -21,15 +21,82 @@ export interface Scenario {
 
 /** Peak-to-trough windows of the reference market for each episode. */
 export const HISTORICAL_SCENARIOS: Scenario[] = [
-  { id: 'gfc', name: 'Global Financial Crisis', start: '2007-10-09', end: '2009-03-09', region: 'GLOBAL', summary: 'US housing bust triggers a global banking crisis; Lehman Brothers collapses. Stocks lose over half their value.' },
-  { id: 'euro-2011', name: 'Euro debt crisis & US downgrade', start: '2011-04-29', end: '2011-10-03', region: 'GLOBAL', summary: 'Fears of Greek default and the first-ever US credit downgrade hit stocks; Treasuries and gold rally.' },
-  { id: 'taper-2013', name: 'Taper tantrum', start: '2013-05-22', end: '2013-06-24', region: 'GLOBAL', summary: 'The Fed hints at slowing bond purchases; bond prices and emerging markets fall, the rupee slides.' },
-  { id: 'china-2015', name: 'China slowdown & oil crash', start: '2015-08-17', end: '2016-02-11', region: 'GLOBAL', summary: 'A surprise yuan devaluation and collapsing oil prices spark a global growth scare.' },
-  { id: 'ilfs-2018', name: 'IL&FS / NBFC crisis', start: '2018-08-28', end: '2018-10-26', region: 'IN', summary: 'Defaults at infrastructure lender IL&FS freeze Indian credit markets; financials sell off.' },
-  { id: 'q4-2018', name: 'Q4 2018 sell-off', start: '2018-09-20', end: '2018-12-24', region: 'US', summary: 'Rate hikes and US–China trade-war fears push US stocks to the edge of a bear market.' },
-  { id: 'covid-2020', name: 'COVID-19 crash', start: '2020-02-19', end: '2020-03-23', region: 'GLOBAL', summary: 'The fastest bear market in history: global lockdowns send stocks down ~34% in 23 trading days.' },
-  { id: 'inflation-2022', name: '2022 inflation & rate shock', start: '2022-01-03', end: '2022-10-12', region: 'GLOBAL', summary: 'The fastest rate hikes in 40 years hit stocks *and* bonds together — the classic 60/40 hedge fails.' },
-  { id: 'tariff-2025', name: '2025 tariff shock', start: '2025-04-02', end: '2025-04-08', region: 'GLOBAL', summary: 'Sweeping US tariff announcements trigger one of the sharpest four-day drops on record.' },
+  {
+    id: 'gfc',
+    name: 'Global Financial Crisis',
+    start: '2007-10-09',
+    end: '2009-03-09',
+    region: 'GLOBAL',
+    summary:
+      'US housing bust triggers a global banking crisis; Lehman Brothers collapses. Stocks lose over half their value.',
+  },
+  {
+    id: 'euro-2011',
+    name: 'Euro debt crisis & US downgrade',
+    start: '2011-04-29',
+    end: '2011-10-03',
+    region: 'GLOBAL',
+    summary:
+      'Fears of Greek default and the first-ever US credit downgrade hit stocks; Treasuries and gold rally.',
+  },
+  {
+    id: 'taper-2013',
+    name: 'Taper tantrum',
+    start: '2013-05-22',
+    end: '2013-06-24',
+    region: 'GLOBAL',
+    summary:
+      'The Fed hints at slowing bond purchases; bond prices and emerging markets fall, the rupee slides.',
+  },
+  {
+    id: 'china-2015',
+    name: 'China slowdown & oil crash',
+    start: '2015-08-17',
+    end: '2016-02-11',
+    region: 'GLOBAL',
+    summary: 'A surprise yuan devaluation and collapsing oil prices spark a global growth scare.',
+  },
+  {
+    id: 'ilfs-2018',
+    name: 'IL&FS / NBFC crisis',
+    start: '2018-08-28',
+    end: '2018-10-26',
+    region: 'IN',
+    summary: 'Defaults at infrastructure lender IL&FS freeze Indian credit markets; financials sell off.',
+  },
+  {
+    id: 'q4-2018',
+    name: 'Q4 2018 sell-off',
+    start: '2018-09-20',
+    end: '2018-12-24',
+    region: 'US',
+    summary: 'Rate hikes and US–China trade-war fears push US stocks to the edge of a bear market.',
+  },
+  {
+    id: 'covid-2020',
+    name: 'COVID-19 crash',
+    start: '2020-02-19',
+    end: '2020-03-23',
+    region: 'GLOBAL',
+    summary: 'The fastest bear market in history: global lockdowns send stocks down ~34% in 23 trading days.',
+  },
+  {
+    id: 'inflation-2022',
+    name: '2022 inflation & rate shock',
+    start: '2022-01-03',
+    end: '2022-10-12',
+    region: 'GLOBAL',
+    summary:
+      'The fastest rate hikes in 40 years hit stocks *and* bonds together — the classic 60/40 hedge fails.',
+  },
+  {
+    id: 'tariff-2025',
+    name: '2025 tariff shock',
+    start: '2025-04-02',
+    end: '2025-04-08',
+    region: 'GLOBAL',
+    summary: 'Sweeping US tariff announcements trigger one of the sharpest four-day drops on record.',
+  },
 ];
 
 export interface StressHolding {
@@ -48,7 +115,12 @@ export interface StressResult {
   coverage: number;
   /** Fraction covered by own data or proxy (rest excluded & weights renormalised). */
   totalCoverage: number;
-  contributions: { id: string; ret: number | null; contribution: number; source: 'own' | 'proxy' | 'missing' }[];
+  contributions: {
+    id: string;
+    ret: number | null;
+    contribution: number;
+    source: 'own' | 'proxy' | 'missing';
+  }[];
 }
 
 function windowReturn(s: Series | undefined, start: number, end: number): number | null {
@@ -124,4 +196,3 @@ export function hypotheticalShock(
   const total = holdings.reduce((s, h) => s + h.weight, 0) || 1;
   return { portfolioImpact: rows.reduce((s, r, i) => s + (r.impact * holdings[i].weight) / total, 0), rows };
 }
-

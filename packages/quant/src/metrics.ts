@@ -4,7 +4,17 @@
  * annualised where conventional. Losses (VaR, CVaR, drawdown) are reported as
  * positive fractions of capital so "bigger = worse" everywhere in the UI.
  */
-import { kurtosis, mean, normInv, quantileSorted, skewness, sortedCopy, std, covariance, variance } from './stats';
+import {
+  kurtosis,
+  mean,
+  normInv,
+  quantileSorted,
+  skewness,
+  sortedCopy,
+  std,
+  covariance,
+  variance,
+} from './stats';
 import { drawdownSeries, wealthIndex } from './series';
 
 export interface DrawdownInfo {
@@ -193,9 +203,14 @@ export function computeMetrics(returns: ArrayLike<number>, opts: MetricsOptions)
     const active = r.map((x, i) => x - b[i]);
     const sa = std(active);
     te = sa * Math.sqrt(ppy);
-    ir = sa > 0 ? ((mean(active) * ppy) / te) : null;
+    ir = sa > 0 ? (mean(active) * ppy) / te : null;
     treynor = beta && Math.abs(beta) > 1e-9 ? (cagr - rfAnnual) / beta : null;
-    let upR = 0, upB = 0, upN = 0, dnR = 0, dnB = 0, dnN = 0;
+    let upR = 0,
+      upB = 0,
+      upN = 0,
+      dnR = 0,
+      dnB = 0,
+      dnN = 0;
     for (let i = 0; i < n; i++) {
       if (b[i] > 0) {
         upR += r[i];
@@ -255,11 +270,7 @@ export function computeMetrics(returns: ArrayLike<number>, opts: MetricsOptions)
 }
 
 /** Rolling statistic over a trailing window (NaN until the window fills). */
-export function rolling(
-  x: ArrayLike<number>,
-  window: number,
-  fn: (slice: number[]) => number,
-): number[] {
+export function rolling(x: ArrayLike<number>, window: number, fn: (slice: number[]) => number): number[] {
   const out = new Array<number>(x.length).fill(NaN);
   const arr = Array.from(x);
   for (let t = window - 1; t < arr.length; t++) out[t] = fn(arr.slice(t - window + 1, t + 1));
@@ -289,7 +300,10 @@ export function rollingVolatility(x: ArrayLike<number>, window: number, ppy: num
 /** Rolling beta of x on benchmark b (O(T)). */
 export function rollingBeta(x: ArrayLike<number>, b: ArrayLike<number>, window: number): number[] {
   const out = new Array<number>(x.length).fill(NaN);
-  let sx = 0, sb = 0, sxb = 0, sbb = 0;
+  let sx = 0,
+    sb = 0,
+    sxb = 0,
+    sbb = 0;
   for (let t = 0; t < x.length; t++) {
     sx += x[t];
     sb += b[t];

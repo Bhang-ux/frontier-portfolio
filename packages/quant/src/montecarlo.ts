@@ -51,7 +51,16 @@ export interface MonteCarloResult {
   /** percentile bands per month (length months+1), keyed by percentile */
   bands: Record<'p5' | 'p10' | 'p25' | 'p50' | 'p75' | 'p90' | 'p95', number[]>;
   invested: number[];
-  final: { mean: number; p5: number; p10: number; p25: number; p50: number; p75: number; p90: number; p95: number };
+  final: {
+    mean: number;
+    p5: number;
+    p10: number;
+    p25: number;
+    p50: number;
+    p75: number;
+    p90: number;
+    p95: number;
+  };
   probGoal: number | null;
   probLoss: number;
   probDepletion: number;
@@ -120,7 +129,9 @@ export function monteCarlo(req: MonteCarloRequest): MonteCarloResult {
   const goalMonth = new Int32Array(P).fill(-1);
   const goal = req.goal;
 
-  const bands = Object.fromEntries(Object.keys(PCTS).map((k) => [k, new Array<number>(months + 1)])) as MonteCarloResult['bands'];
+  const bands = Object.fromEntries(
+    Object.keys(PCTS).map((k) => [k, new Array<number>(months + 1)]),
+  ) as MonteCarloResult['bands'];
   const invested = new Array<number>(months + 1);
   const sampleCount = Math.min(40, P);
   const samplePaths: number[][] = Array.from({ length: sampleCount }, () => new Array<number>(months + 1));
@@ -180,12 +191,23 @@ export function monteCarlo(req: MonteCarloRequest): MonteCarloResult {
     if (v < lo || v > hi) continue;
     counts[Math.min(bins - 1, Math.floor((v - lo) / width))]++;
   }
-  const reached = Array.from(goalMonth).filter((m) => m >= 0).sort((a, b) => a - b);
+  const reached = Array.from(goalMonth)
+    .filter((m) => m >= 0)
+    .sort((a, b) => a - b);
   return {
     months,
     bands,
     invested,
-    final: { mean: meanFinal, p5: q(0.05), p10: q(0.1), p25: q(0.25), p50: q(0.5), p75: q(0.75), p90: q(0.9), p95: q(0.95) },
+    final: {
+      mean: meanFinal,
+      p5: q(0.05),
+      p10: q(0.1),
+      p25: q(0.25),
+      p50: q(0.5),
+      p75: q(0.75),
+      p90: q(0.9),
+      p95: q(0.95),
+    },
     probGoal: goal !== undefined ? reached.length / P : null,
     probLoss: finals.filter((v) => v < totalInvested).length / P,
     probDepletion: Array.from(depleted).filter(Boolean).length / P,

@@ -100,7 +100,13 @@ describe('optimisers vs CVXPY (Clarabel / HiGHS)', () => {
 
   it('group (asset-class) constraints via Dykstra projection', () => {
     const { groups, weights } = G.optimizer.grouped;
-    const r = optimize({ objective: 'max-utility', mu, cov, riskAversion: G.meta.lambda, constraints: { upper: ub, groups } });
+    const r = optimize({
+      objective: 'max-utility',
+      mu,
+      cov,
+      riskAversion: G.meta.lambda,
+      constraints: { upper: ub, groups },
+    });
     expect(maxAbsDiff(r.weights, weights)).toBeLessThan(5e-4);
     expect(r.weights[0] + r.weights[1] + r.weights[2]).toBeLessThanOrEqual(0.35 + 1e-6);
     expect(r.weights[5] + r.weights[6]).toBeGreaterThanOrEqual(0.25 - 1e-6);
@@ -108,7 +114,9 @@ describe('optimisers vs CVXPY (Clarabel / HiGHS)', () => {
 
   it('maximum diversification ratio', () => {
     const r = optimize({ objective: 'max-diversification', mu, cov, constraints });
-    expect(diversificationRatio(r.weights, cov)).toBeGreaterThanOrEqual(diversificationRatio(G.optimizer.maxDiversification, cov) - 1e-6);
+    expect(diversificationRatio(r.weights, cov)).toBeGreaterThanOrEqual(
+      diversificationRatio(G.optimizer.maxDiversification, cov) - 1e-6,
+    );
   });
 
   it('equal risk contribution (more exact than the interior-point reference)', () => {
@@ -145,7 +153,11 @@ describe('Hierarchical Risk Parity vs PyPortfolioOpt', () => {
 describe('Black–Litterman vs PyPortfolioOpt', () => {
   const B = G.blackLitterman;
   const views = (withConf: boolean) =>
-    B.P.map((pick: number[], k: number) => ({ pick, value: B.Q[k], confidence: withConf ? B.confidences[k] : undefined }));
+    B.P.map((pick: number[], k: number) => ({
+      pick,
+      value: B.Q[k],
+      confidence: withConf ? B.confidences[k] : undefined,
+    }));
   it('Idzorek confidences', () => {
     const r = blackLitterman({ cov, prior: B.pi, views: views(true), tau: B.tau });
     expect(maxAbsDiff(r.posteriorReturns, B.posteriorReturns)).toBeLessThan(1e-13);
@@ -182,7 +194,13 @@ describe('statistics vs NumPy / SciPy / pandas', () => {
     expect(maxAbsDiff(eigenSymmetric(cov).values, G.eigen.values)).toBeLessThan(1e-14);
   });
   it('normal quantile & CDF', () => {
-    G.normal.p.forEach((p: number, i: number) => expect(Math.abs(normInv(p) - G.normal.ppf[i])).toBeLessThan(5e-9 * Math.max(1, Math.abs(G.normal.ppf[i]))));
-    G.normal.cdfAt.forEach((x: number, i: number) => expect(Math.abs(normCdf(x) - G.normal.cdf[i])).toBeLessThan(1e-7));
+    G.normal.p.forEach((p: number, i: number) =>
+      expect(Math.abs(normInv(p) - G.normal.ppf[i])).toBeLessThan(
+        5e-9 * Math.max(1, Math.abs(G.normal.ppf[i])),
+      ),
+    );
+    G.normal.cdfAt.forEach((x: number, i: number) =>
+      expect(Math.abs(normCdf(x) - G.normal.cdf[i])).toBeLessThan(1e-7),
+    );
   });
 });

@@ -71,7 +71,12 @@ describe('linear algebra', () => {
     I.forEach((row, i) => row.forEach((v, j) => expect(v).toBeCloseTo(i === j ? 1 : 0, 10)));
   });
   it('cholesky rejects indefinite matrices', () => {
-    expect(cholesky([[1, 2], [2, 1]])).toBeNull();
+    expect(
+      cholesky([
+        [1, 2],
+        [2, 1],
+      ]),
+    ).toBeNull();
   });
   it('Jacobi eigen-decomposition reconstructs the matrix with orthonormal vectors', () => {
     const S = randomSPD(10, 3);
@@ -93,17 +98,23 @@ describe('series & calendars', () => {
   it('aligns markets on a weekday calendar with forward fill', () => {
     const d = (s: string) => toEpochDay(s);
     const us = { dates: [d('2024-01-02'), d('2024-01-03'), d('2024-01-05')], values: [100, 101, 103] };
-    const crypto = { dates: [d('2024-01-02'), d('2024-01-03'), d('2024-01-04'), d('2024-01-05'), d('2024-01-06')], values: [1, 2, 3, 4, 5] };
+    const crypto = {
+      dates: [d('2024-01-02'), d('2024-01-03'), d('2024-01-04'), d('2024-01-05'), d('2024-01-06')],
+      values: [1, 2, 3, 4, 5],
+    };
     const a = alignSeries([us, crypto]);
     expect(a.dates.map(fromEpochDay)).toEqual(['2024-01-02', '2024-01-03', '2024-01-04', '2024-01-05']);
     expect(a.values.map((r) => r[0])).toEqual([100, 101, 101, 103]); // US holiday forward-filled
     expect(a.values.map((r) => r[1])).toEqual([1, 2, 3, 4]); // Saturday dropped
   });
   it('starts the aligned window when the youngest series begins', () => {
-    const a = alignSeries([
-      { dates: [1, 2, 5, 6, 7], values: [1, 2, 3, 4, 5] },
-      { dates: [5, 6, 7], values: [9, 9, 9] },
-    ], { calendar: 'union' });
+    const a = alignSeries(
+      [
+        { dates: [1, 2, 5, 6, 7], values: [1, 2, 3, 4, 5] },
+        { dates: [5, 6, 7], values: [9, 9, 9] },
+      ],
+      { calendar: 'union' },
+    );
     expect(a.dates[0]).toBe(5);
   });
   it('period ends & calendar returns', () => {
@@ -117,7 +128,10 @@ describe('series & calendars', () => {
     expect(periodsPerYearFromDates(daily)).toBeCloseTo(252, 6);
   });
   it('converts currencies with forward-filled FX', () => {
-    const out = convertSeries({ dates: [1, 2, 3], values: [10, 11, 12] }, { dates: [1, 3], values: [80, 82] });
+    const out = convertSeries(
+      { dates: [1, 2, 3], values: [10, 11, 12] },
+      { dates: [1, 3], values: [80, 82] },
+    );
     expect(out.values).toEqual([800, 880, 984]);
   });
   it('LTTB keeps endpoints and the requested size', () => {
@@ -149,7 +163,9 @@ describe('metrics', () => {
   });
   it('Cornish–Fisher VaR exceeds Gaussian VaR for negatively skewed returns', () => {
     const rng = createRng(4);
-    const r = Array.from({ length: 3000 }, () => (rng.next() < 0.05 ? -0.05 + 0.01 * rng.normal() : 0.002 + 0.008 * rng.normal()));
+    const r = Array.from({ length: 3000 }, () =>
+      rng.next() < 0.05 ? -0.05 + 0.01 * rng.normal() : 0.002 + 0.008 * rng.normal(),
+    );
     const m = computeMetrics(r, { periodsPerYear: 252 });
     expect(skewness(r)).toBeLessThan(0);
     expect(m.varCornishFisher).toBeGreaterThan(m.varParametric);

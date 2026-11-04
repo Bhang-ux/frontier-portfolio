@@ -69,7 +69,8 @@ const finite = (x: unknown): x is number => typeof x === 'number' && Number.isFi
 export function parseDaily(json: unknown, symbol: string): DailyBars {
   const body = json as ChartResponse;
   if (!body?.chart) throw new Error(`${symbol}: unexpected response shape`);
-  if (body.chart.error) throw new Error(`${symbol}: ${body.chart.error.code} — ${body.chart.error.description}`);
+  if (body.chart.error)
+    throw new Error(`${symbol}: ${body.chart.error.code} — ${body.chart.error.description}`);
   const r = body.chart.result?.[0];
   if (!r) throw new Error(`${symbol}: empty result`);
   const ts = r.timestamp ?? [];
@@ -162,7 +163,10 @@ class Session {
   async ensure(): Promise<void> {
     if (this.crumb) return;
     this.pending ??= (async () => {
-      const r1 = await fetch('https://fc.yahoo.com/', { headers: { 'User-Agent': BROWSER_UA }, redirect: 'manual' }).catch(() => null);
+      const r1 = await fetch('https://fc.yahoo.com/', {
+        headers: { 'User-Agent': BROWSER_UA },
+        redirect: 'manual',
+      }).catch(() => null);
       const setCookie = r1?.headers.getSetCookie?.() ?? [];
       this.cookie = setCookie.map((c) => c.split(';')[0]).join('; ');
       const r2 = await fetchWithRetry('https://query2.finance.yahoo.com/v1/test/getcrumb', {
@@ -176,7 +180,10 @@ class Session {
 
   decorate(url: string): { url: string; headers: Record<string, string> } {
     if (!this.needed || !this.crumb) return { url, headers: {} };
-    return { url: `${url}&crumb=${encodeURIComponent(this.crumb)}`, headers: this.cookie ? { Cookie: this.cookie } : {} };
+    return {
+      url: `${url}&crumb=${encodeURIComponent(this.crumb)}`,
+      headers: this.cookie ? { Cookie: this.cookie } : {},
+    };
   }
 }
 

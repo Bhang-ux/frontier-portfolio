@@ -53,7 +53,17 @@ describe('Yahoo chart parsing', () => {
     expect(d.longName).toBe('Reliance Industries Limited');
   });
   it('surfaces API errors with the symbol', () => {
-    expect(() => parseDaily({ chart: { result: null, error: { code: 'Not Found', description: 'No data found, symbol may be delisted' } } }, 'XXXX')).toThrow(/XXXX: Not Found/);
+    expect(() =>
+      parseDaily(
+        {
+          chart: {
+            result: null,
+            error: { code: 'Not Found', description: 'No data found, symbol may be delisted' },
+          },
+        },
+        'XXXX',
+      ),
+    ).toThrow(/XXXX: Not Found/);
     expect(() => parseDaily({ nope: true }, 'X')).toThrow(/unexpected response/);
   });
   it('falls back to close when adjclose is absent (indices)', () => {
@@ -66,9 +76,17 @@ describe('Yahoo chart parsing', () => {
     expect(r.previousClose).toBe(1300);
   });
   it('removes one-day bad prints but keeps genuine moves', () => {
-    const s = removeSpikes({ dates: [1, 2, 3, 4, 5], close: [100, 101, 300, 102, 103], adjClose: [100, 101, 300, 102, 103] });
+    const s = removeSpikes({
+      dates: [1, 2, 3, 4, 5],
+      close: [100, 101, 300, 102, 103],
+      adjClose: [100, 101, 300, 102, 103],
+    });
     expect(s.adjClose).toEqual([100, 101, 102, 103]);
-    const crash = removeSpikes({ dates: [1, 2, 3, 4], close: [100, 50, 49, 48], adjClose: [100, 50, 49, 48] });
+    const crash = removeSpikes({
+      dates: [1, 2, 3, 4],
+      close: [100, 50, 49, 48],
+      adjClose: [100, 50, 49, 48],
+    });
     expect(crash.adjClose).toEqual([100, 50, 49, 48]);
   });
 });
@@ -138,7 +156,14 @@ describe('concurrency limiter', () => {
 describe('end-to-end (synthetic, offline)', () => {
   it('publishes a manifest, snapshot and per-asset histories that pass validation', async () => {
     const out = await mkdtemp(path.join(tmpdir(), 'frontier-'));
-    const code = await run({ synthetic: true, out, concurrency: 4, minCoverage: 0.85, maxStaleDays: 6, start: '2015-01-01' });
+    const code = await run({
+      synthetic: true,
+      out,
+      concurrency: 4,
+      minCoverage: 0.85,
+      maxStaleDays: 6,
+      start: '2015-01-01',
+    });
     expect(code).toBe(0);
     const manifest = JSON.parse(await readFile(path.join(out, 'manifest.json'), 'utf8'));
     const snap = JSON.parse(await readFile(path.join(out, 'snapshot.json'), 'utf8'));

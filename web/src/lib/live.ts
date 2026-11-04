@@ -35,7 +35,9 @@ function connect() {
   if (typeof WebSocket === 'undefined' || ws || document.hidden) return;
   status = 'connecting';
   emit();
-  const url = `${HOSTS[hostIdx]}?streams=${Object.values(STREAMS).map((s) => `${s}@miniTicker`).join('/')}`;
+  const url = `${HOSTS[hostIdx]}?streams=${Object.values(STREAMS)
+    .map((s) => `${s}@miniTicker`)
+    .join('/')}`;
   try {
     ws = new WebSocket(url);
   } catch {
@@ -56,7 +58,15 @@ function connect() {
       const price = Number(d.c);
       const open = Number(d.o);
       if (!Number.isFinite(price) || price <= 0) return;
-      ticks = { ...ticks, [id]: { price, open24h: open, changePct24h: open > 0 ? price / open - 1 : 0, ts: Number(d.E) || Date.now() } };
+      ticks = {
+        ...ticks,
+        [id]: {
+          price,
+          open24h: open,
+          changePct24h: open > 0 ? price / open - 1 : 0,
+          ts: Number(d.E) || Date.now(),
+        },
+      };
       emit();
     } catch {
       /* ignore malformed frames */
@@ -106,11 +116,19 @@ function subscribe(cb: () => void) {
 }
 
 export function useLiveTicks(): Record<string, LiveTick> {
-  return useSyncExternalStore(subscribe, () => ticks, () => ticks);
+  return useSyncExternalStore(
+    subscribe,
+    () => ticks,
+    () => ticks,
+  );
 }
 
 export function useLiveStatus(): Status {
-  return useSyncExternalStore(subscribe, () => status, () => status);
+  return useSyncExternalStore(
+    subscribe,
+    () => status,
+    () => status,
+  );
 }
 
 export const LIVE_IDS = Object.keys(STREAMS);

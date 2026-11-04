@@ -100,7 +100,8 @@ function clusterVariance(cov: Matrix, items: number[]): number {
   const s = ivp.reduce((a, b) => a + b, 0);
   const w = ivp.map((v) => v / s);
   let v = 0;
-  for (let a = 0; a < items.length; a++) for (let b = 0; b < items.length; b++) v += w[a] * w[b] * cov[items[a]][items[b]];
+  for (let a = 0; a < items.length; a++)
+    for (let b = 0; b < items.length; b++) v += w[a] * w[b] * cov[items[a]][items[b]];
   return v;
 }
 

@@ -22,7 +22,10 @@ let remote: Api | null = null;
 
 export function quant(): Api {
   if (!remote) {
-    const worker = new Worker(new URL('../workers/quant.worker.ts', import.meta.url), { type: 'module', name: 'frontier-quant' });
+    const worker = new Worker(new URL('../workers/quant.worker.ts', import.meta.url), {
+      type: 'module',
+      name: 'frontier-quant',
+    });
     remote = Comlink.wrap<QuantApi>(worker);
   }
   return remote;
@@ -50,10 +53,22 @@ export function useWorkerCall<A, R>(name: string, args: A | null, call: (api: Ap
   });
 }
 
-export const useAnalysis = (req: AnalyzeRequest | null) => useWorkerCall('analyze', req, (api, a) => api.analyze(a));
-export const useOptimization = (req: OptimizeRequest | null) => useWorkerCall('optimize', req, (api, a) => api.optimize(a));
-export const useWalkForward = (req: WalkForwardRequest | null) => useWorkerCall('walkForward', req, (api, a) => api.walkForward(a));
-export const useRebalanceStudy = (req: RebalanceStudyRequest | null) => useWorkerCall('rebalanceStudy', req, (api, a) => api.rebalanceStudy(a));
-export const useSimulation = (req: MonteCarloRequest | null) => useWorkerCall('simulate', req, (api, a) => api.simulate(a));
-export const useMonthlyReturns = (req: { assets: SeriesInput[]; weights: number[]; base: Currency; fx?: Series; lookbackYears: number } | null) =>
-  useWorkerCall('monthlyReturns', req, (api, a) => api.monthlyReturns(a));
+export const useAnalysis = (req: AnalyzeRequest | null) =>
+  useWorkerCall('analyze', req, (api, a) => api.analyze(a));
+export const useOptimization = (req: OptimizeRequest | null) =>
+  useWorkerCall('optimize', req, (api, a) => api.optimize(a));
+export const useWalkForward = (req: WalkForwardRequest | null) =>
+  useWorkerCall('walkForward', req, (api, a) => api.walkForward(a));
+export const useRebalanceStudy = (req: RebalanceStudyRequest | null) =>
+  useWorkerCall('rebalanceStudy', req, (api, a) => api.rebalanceStudy(a));
+export const useSimulation = (req: MonteCarloRequest | null) =>
+  useWorkerCall('simulate', req, (api, a) => api.simulate(a));
+export const useMonthlyReturns = (
+  req: {
+    assets: SeriesInput[];
+    weights: number[];
+    base: Currency;
+    fx?: Series;
+    lookbackYears: number;
+  } | null,
+) => useWorkerCall('monthlyReturns', req, (api, a) => api.monthlyReturns(a));

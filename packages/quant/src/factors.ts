@@ -42,7 +42,9 @@ export function factorRegression(
   const rf = perPeriodRate(opts.riskFree ?? 0, opts.periodsPerYear);
   const y = portfolio.map((r) => r - rf);
   const excessKeys = new Set(opts.excessFactorKeys ?? []);
-  const X = Array.from({ length: T }, (_, t) => factors.map((f) => f.returns[t] - (excessKeys.has(f.key) ? rf : 0)));
+  const X = Array.from({ length: T }, (_, t) =>
+    factors.map((f) => f.returns[t] - (excessKeys.has(f.key) ? rf : 0)),
+  );
   const fit = ols(y, X, { intercept: true });
   const betas = fit.coef.slice(1);
   // Euler variance split: share_k = β_k · cov(f_k, Σ_j β_j f_j) / var(y)
@@ -79,6 +81,9 @@ export function factorRegression(
 
 /** Simple single-factor beta (used for hypothetical shocks). */
 export function simpleBeta(asset: number[], driver: number[]): { beta: number; r2: number } {
-  const fit = ols(asset, driver.map((d) => [d]));
+  const fit = ols(
+    asset,
+    driver.map((d) => [d]),
+  );
   return { beta: fit.coef[1], r2: fit.rSquared };
 }

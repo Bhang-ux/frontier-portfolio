@@ -50,7 +50,8 @@ export async function fetchWithRetry(url: string, opts: RetryOptions = {}): Prom
       lastErr = err;
       const retryAfter = Number(res.headers.get('retry-after'));
       if (attempt < retries) {
-        const backoff = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : base * 2 ** attempt;
+        const backoff =
+          Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : base * 2 ** attempt;
         await sleep(Math.random() * backoff + backoff / 2);
       }
     } catch (e) {

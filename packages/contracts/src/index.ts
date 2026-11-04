@@ -17,15 +17,7 @@ export type Currency = 'USD' | 'INR';
 export type Region = 'US' | 'IN' | 'DEV' | 'EM' | 'GLOBAL';
 export type AssetKind = 'etf' | 'stock' | 'index' | 'crypto' | 'fx' | 'rate' | 'future' | 'cash';
 export type AssetClass =
-  | 'equity'
-  | 'bond'
-  | 'commodity'
-  | 'real-estate'
-  | 'crypto'
-  | 'cash'
-  | 'currency'
-  | 'volatility'
-  | 'rate';
+  'equity' | 'bond' | 'commodity' | 'real-estate' | 'crypto' | 'cash' | 'currency' | 'volatility' | 'rate';
 
 export interface AssetMeta {
   /** File-safe identifier (also the URL slug). */

@@ -50,9 +50,14 @@ function windowReturns(series: Series, anchor: number, days: number): number[] {
   return simpleReturns(sliceSeries(series, anchor - days).values);
 }
 
-const safe = (x: number | null | undefined): number | null => (x === null || x === undefined || !Number.isFinite(x) ? null : x);
+const safe = (x: number | null | undefined): number | null =>
+  x === null || x === undefined || !Number.isFinite(x) ? null : x;
 
-export function analyzeAsset(a: LoadedAsset, universe: Universe, riskFree: Record<Currency, number>): AnalyzedAsset {
+export function analyzeAsset(
+  a: LoadedAsset,
+  universe: Universe,
+  riskFree: Record<Currency, number>,
+): AnalyzedAsset {
   const s = a.series;
   const n = s.dates.length;
   const anchor = s.dates[n - 1];
@@ -104,7 +109,10 @@ export function analyzeAsset(a: LoadedAsset, universe: Universe, riskFree: Recor
       m1: safe(trailing(s, anchor, 30.44)),
       m3: safe(trailing(s, anchor, 91.31)),
       m6: safe(trailing(s, anchor, 182.6)),
-      ytd: Number.isFinite(ytdBase) && s.dates[0] < startOfYear(yearOf(anchor)) ? s.values[n - 1] / ytdBase - 1 : null,
+      ytd:
+        Number.isFinite(ytdBase) && s.dates[0] < startOfYear(yearOf(anchor))
+          ? s.values[n - 1] / ytdBase - 1
+          : null,
       y1: safe(trailing(s, anchor, YEAR)),
       y3: safe(trailing(s, anchor, 3 * YEAR, true)),
       y5: safe(trailing(s, anchor, 5 * YEAR, true)),
@@ -149,7 +157,8 @@ export function computeSignals(analyzed: AnalyzedAsset[]): Map<string, Signals> 
       const t = m.tech!;
       const sig = compositeSignal(t, {
         momentum: t.momentum12_1 !== null && moms.length >= 3 ? percentileRank(moms, t.momentum12_1) : null,
-        sharpe: m.stats.sharpe1y !== null && sharpes.length >= 3 ? percentileRank(sharpes, m.stats.sharpe1y) : null,
+        sharpe:
+          m.stats.sharpe1y !== null && sharpes.length >= 3 ? percentileRank(sharpes, m.stats.sharpe1y) : null,
       });
       out.set(m.asset.meta.id, {
         score: sig.score,
@@ -170,7 +179,11 @@ export function computeSignals(analyzed: AnalyzedAsset[]): Map<string, Signals> 
 
 const { pct, number } = explain;
 
-export function summarizeAsset(a: AnalyzedAsset, signals: Signals | undefined, universe: Map<string, AnalyzedAsset>): string {
+export function summarizeAsset(
+  a: AnalyzedAsset,
+  signals: Signals | undefined,
+  universe: Map<string, AnalyzedAsset>,
+): string {
   const m = a.asset.meta;
   const st = a.stats;
   const parts: string[] = [];
@@ -183,31 +196,73 @@ export function summarizeAsset(a: AnalyzedAsset, signals: Signals | undefined, u
   }
   if (m.assetClass === 'volatility') {
     const lvl = a.asset.quote.price;
-    const mood = lvl < 15 ? 'calm — investors expect small moves' : lvl < 22 ? 'normal' : lvl < 30 ? 'elevated — investors are nervous' : 'very high — markets are in stress';
+    const mood =
+      lvl < 15
+        ? 'calm — investors expect small moves'
+        : lvl < 22
+          ? 'normal'
+          : lvl < 30
+            ? 'elevated — investors are nervous'
+            : 'very high — markets are in stress';
     return `${m.short} is at ${number(lvl, 1)}, which is ${mood}. ${m.description}`;
   }
   const bench = m.benchmark && m.benchmark !== m.id ? universe.get(m.benchmark) : undefined;
-  const horizon = st.returns.y5 !== null ? { r: st.returns.y5, label: '5 years', br: bench?.stats.returns.y5 } : st.returns.y3 !== null ? { r: st.returns.y3, label: '3 years', br: bench?.stats.returns.y3 } : st.returns.y1 !== null ? { r: st.returns.y1, label: 'the past year', br: bench?.stats.returns.y1 } : null;
+  const horizon =
+    st.returns.y5 !== null
+      ? { r: st.returns.y5, label: '5 years', br: bench?.stats.returns.y5 }
+      : st.returns.y3 !== null
+        ? { r: st.returns.y3, label: '3 years', br: bench?.stats.returns.y3 }
+        : st.returns.y1 !== null
+          ? { r: st.returns.y1, label: 'the past year', br: bench?.stats.returns.y1 }
+          : null;
   if (horizon) {
-    const per = horizon.label === 'the past year' ? 'over the past year' : `a year over the past ${horizon.label}`;
-    const vs = horizon.br !== undefined && horizon.br !== null ? ` (${bench!.asset.meta.short}: ${pct(horizon.br)})` : '';
+    const per =
+      horizon.label === 'the past year' ? 'over the past year' : `a year over the past ${horizon.label}`;
+    const vs =
+      horizon.br !== undefined && horizon.br !== null
+        ? ` (${bench!.asset.meta.short}: ${pct(horizon.br)})`
+        : '';
     parts.push(`${m.short} has returned ${pct(horizon.r)} ${per}${vs}.`);
   }
   if (st.vol1y !== null) {
     const lvl = explain.explainVolatility(st.vol1y).level;
-    const word = { 'very-low': 'very low', low: 'low', moderate: 'moderate', high: 'high', 'very-high': 'very high' }[lvl!];
+    const word = {
+      'very-low': 'very low',
+      low: 'low',
+      moderate: 'moderate',
+      high: 'high',
+      'very-high': 'very high',
+    }[lvl!];
     parts.push(`Its volatility is ${word} (${pct(st.vol1y, 0)} a year).`);
   }
   if (signals) {
-    const trend = signals.trend === 'up' ? 'is in an uptrend' : signals.trend === 'down' ? 'is in a downtrend' : 'is moving sideways';
-    const fromHigh = st.fromHigh52 !== null ? (st.fromHigh52 > -0.02 ? ' and is trading near its 52-week high' : ` and trades ${pct(-st.fromHigh52, 0)} below its 52-week high`) : '';
+    const trend =
+      signals.trend === 'up'
+        ? 'is in an uptrend'
+        : signals.trend === 'down'
+          ? 'is in a downtrend'
+          : 'is moving sideways';
+    const fromHigh =
+      st.fromHigh52 !== null
+        ? st.fromHigh52 > -0.02
+          ? ' and is trading near its 52-week high'
+          : ` and trades ${pct(-st.fromHigh52, 0)} below its 52-week high`
+        : '';
     parts.push(`Right now it ${trend}${fromHigh}.`);
   }
-  if (st.maxDrawdownAll !== null && st.maxDrawdownAll > 0.15) parts.push(`At its worst it fell ${pct(st.maxDrawdownAll, 0)} from a peak — a reminder of what holding it can feel like.`);
+  if (st.maxDrawdownAll !== null && st.maxDrawdownAll > 0.15)
+    parts.push(
+      `At its worst it fell ${pct(st.maxDrawdownAll, 0)} from a peak — a reminder of what holding it can feel like.`,
+    );
   return parts.join(' ');
 }
 
-export function buildSnapshotEntry(a: AnalyzedAsset, signals: Signals | undefined, summary: string, hash: string): AssetSnapshot {
+export function buildSnapshotEntry(
+  a: AnalyzedAsset,
+  signals: Signals | undefined,
+  summary: string,
+  hash: string,
+): AssetSnapshot {
   const s = a.asset.series;
   const spark = a.asset.close.slice(-90).map((v) => Number(v.toPrecision(5)));
   return {

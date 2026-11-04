@@ -53,7 +53,13 @@ describe('capped-simplex projection', () => {
     }
   });
   it('disjoint-group projection is exact and satisfies all group bounds', () => {
-    const c = normalizeConstraints(6, { upper: new Array(6).fill(0.5), groups: [{ members: [0, 1, 2], upper: 0.3 }, { members: [4, 5], lower: 0.4 }] });
+    const c = normalizeConstraints(6, {
+      upper: new Array(6).fill(0.5),
+      groups: [
+        { members: [0, 1, 2], upper: 0.3 },
+        { members: [4, 5], lower: 0.4 },
+      ],
+    });
     const P = makeProjector(c);
     const rng = createRng(17);
     for (let t = 0; t < 100; t++) {
@@ -66,14 +72,30 @@ describe('capped-simplex projection', () => {
     }
   });
   it('overlapping groups fall back to Dykstra and stay feasible', () => {
-    const c = normalizeConstraints(4, { groups: [{ members: [0, 1], upper: 0.4 }, { members: [1, 2], upper: 0.4 }] });
+    const c = normalizeConstraints(4, {
+      groups: [
+        { members: [0, 1], upper: 0.4 },
+        { members: [1, 2], upper: 0.4 },
+      ],
+    });
     const w = makeProjector(c)([0.9, 0.9, 0.1, -0.3]);
     expect(constraintViolation(w, c)).toBeLessThan(1e-8);
   });
   it('reports infeasible constraints in plain English', () => {
     const issues = feasibilityIssues(normalizeConstraints(3, { upper: [0.2, 0.2, 0.2] }));
     expect(issues[0]).toMatch(/raise the per-asset cap/);
-    expect(() => optimize({ objective: 'min-variance', mu: [0.1, 0.1, 0.1], cov: [[1, 0, 0], [0, 1, 0], [0, 0, 1]], constraints: { upper: [0.2, 0.2, 0.2] } })).toThrow();
+    expect(() =>
+      optimize({
+        objective: 'min-variance',
+        mu: [0.1, 0.1, 0.1],
+        cov: [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1],
+        ],
+        constraints: { upper: [0.2, 0.2, 0.2] },
+      }),
+    ).toThrow();
   });
 });
 
@@ -95,7 +117,8 @@ describe('optimiser behaviour', () => {
     const t = optimize({ objective: 'max-sharpe', mu, cov, riskFree: rf });
     const f = efficientFrontier(mu, cov, {}, { points: 60, riskFree: rf });
     for (const p of f) expect(t.sharpe).toBeGreaterThanOrEqual(p.sharpe - 1e-7);
-    for (const p of randomPortfolios(mu, cov, 2000)) expect(t.sharpe).toBeGreaterThanOrEqual((p.ret - rf) / p.vol - 1e-7);
+    for (const p of randomPortfolios(mu, cov, 2000))
+      expect(t.sharpe).toBeGreaterThanOrEqual((p.ret - rf) / p.vol - 1e-7);
   });
 
   it('falls back to min variance with a warning when nothing beats cash', () => {
@@ -127,7 +150,16 @@ describe('optimiser behaviour', () => {
 
   it('respects per-asset caps for every objective', () => {
     const upper = new Array(6).fill(0.25);
-    for (const objective of ['max-sharpe', 'min-variance', 'max-utility', 'max-diversification', 'risk-parity', 'hrp', 'equal-weight', 'inverse-volatility'] as const) {
+    for (const objective of [
+      'max-sharpe',
+      'min-variance',
+      'max-utility',
+      'max-diversification',
+      'risk-parity',
+      'hrp',
+      'equal-weight',
+      'inverse-volatility',
+    ] as const) {
       const r = optimize({ objective, mu, cov, constraints: { upper }, riskFree: 0.02 });
       expect(Math.max(...r.weights)).toBeLessThanOrEqual(0.25 + 1e-8);
       expect(r.weights.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 8);
@@ -146,7 +178,8 @@ describe('backtesting', () => {
   }
   it('buy-and-hold equals the weighted price path', () => {
     const r = backtest({ dates, prices, weights: [0.5, 0.3, 0.2], rebalance: 'none', initial: 1 });
-    const expected = 0.5 * (prices[T - 1][0] / 100) + 0.3 * (prices[T - 1][1] / 100) + 0.2 * (prices[T - 1][2] / 100);
+    const expected =
+      0.5 * (prices[T - 1][0] / 100) + 0.3 * (prices[T - 1][1] / 100) + 0.2 * (prices[T - 1][2] / 100);
     expect(r.equity[T - 1]).toBeCloseTo(expected, 10);
     expect(r.rebalances).toBe(0);
   });
@@ -190,7 +223,13 @@ describe('rebalance plan', () => {
     expect(plan.trades.find((t) => t.id === 'A')).toMatchObject({ side: 'buy', units: 5 });
   });
   it('fractional plans hit targets exactly', () => {
-    const plan = rebalancePlan({ holdings: [], targetWeights: { A: 0.6, B: 0.4 }, prices: { A: 13, B: 7 }, cash: 1000, fractional: true });
+    const plan = rebalancePlan({
+      holdings: [],
+      targetWeights: { A: 0.6, B: 0.4 },
+      prices: { A: 13, B: 7 },
+      cash: 1000,
+      fractional: true,
+    });
     expect(plan.trackingGap).toBeLessThan(1e-12);
   });
 });

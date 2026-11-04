@@ -15,7 +15,12 @@ export const roundSig = (x: number, sig = 6): number => {
   return Math.round(x * f) / f;
 };
 
-export function encodeHistory(id: string, currency: Currency, dates: number[], closes: number[]): HistoryFile {
+export function encodeHistory(
+  id: string,
+  currency: Currency,
+  dates: number[],
+  closes: number[],
+): HistoryFile {
   const d = dates.map((v, i) => (i === 0 ? 0 : v - dates[i - 1]));
   return {
     id,

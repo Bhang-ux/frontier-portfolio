@@ -221,7 +221,9 @@
   font-size: 0.875rem;
   color: var(--text);
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
   &::placeholder {
     color: var(--text-3);
   }
@@ -250,8 +252,7 @@
   pointer-events: none;
   background:
     radial-gradient(900px 520px at 12% -8%, var(--glow-a), transparent 60%),
-    radial-gradient(760px 480px at 92% 2%, var(--glow-b), transparent 60%),
-    var(--bg);
+    radial-gradient(760px 480px at 92% 2%, var(--glow-b), transparent 60%), var(--bg);
 }
 
 .skeleton {

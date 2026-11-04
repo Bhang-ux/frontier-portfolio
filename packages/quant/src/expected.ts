@@ -145,7 +145,9 @@ export function blackLitterman({ cov, prior, views, tau = 0.05 }: BlackLitterman
   const Q = views.map((v) => v.value);
   const tauSigma = cov.map((row) => row.map((v) => v * tau));
   // τΣPᵀ : n×k
-  const tSPt: Matrix = Array.from({ length: n }, (_, i) => P.map((p) => p.reduce((s, pj, j) => s + tauSigma[i][j] * pj, 0)));
+  const tSPt: Matrix = Array.from({ length: n }, (_, i) =>
+    P.map((p) => p.reduce((s, pj, j) => s + tauSigma[i][j] * pj, 0)),
+  );
   const omega = views.map((v, idx) => {
     const base = quadForm(P[idx], tauSigma); // p τΣ pᵀ
     if (v.confidence === undefined) return base;
@@ -155,7 +157,10 @@ export function blackLitterman({ cov, prior, views, tau = 0.05 }: BlackLitterman
   });
   // A = P τΣ Pᵀ + Ω : k×k
   const A: Matrix = Array.from({ length: k }, (_, a) =>
-    Array.from({ length: k }, (_, b) => P[a].reduce((s, pa, i) => s + pa * tSPt[i][b], 0) + (a === b ? omega[a] : 0)),
+    Array.from(
+      { length: k },
+      (_, b) => P[a].reduce((s, pa, i) => s + pa * tSPt[i][b], 0) + (a === b ? omega[a] : 0),
+    ),
   );
   const resid = Q.map((q, a) => q - P[a].reduce((s, p, i) => s + p * prior[i], 0));
   const sol = solveSPD(A, resid);

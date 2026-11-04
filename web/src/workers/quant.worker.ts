@@ -97,13 +97,20 @@ interface Prepared {
   benchReturns?: number[];
 }
 
-function prepare(assets: SeriesInput[], base: Currency, fx: Series | undefined, lookbackYears: number, benchmark?: SeriesInput): Prepared {
+function prepare(
+  assets: SeriesInput[],
+  base: Currency,
+  fx: Series | undefined,
+  lookbackYears: number,
+  benchmark?: SeriesInput,
+): Prepared {
   const conv = assets.map((a) => toBase(a, base, fx));
   const all = benchmark ? [...conv, toBase(benchmark, base, fx)] : conv;
   const end = Math.max(...all.map((s) => s.dates[s.dates.length - 1]));
   const start = lookbackYears > 0 ? end - lookbackYears * YEAR : -Infinity;
   const al = alignSeries(all, { start });
-  if (al.dates.length < 30) throw new Error('Not enough overlapping history between these assets for analysis.');
+  if (al.dates.length < 30)
+    throw new Error('Not enough overlapping history between these assets for analysis.');
   const n = assets.length;
   const prices = al.values.map((row) => row.slice(0, n));
   const bench = benchmark ? al.values.map((row) => row[n]) : undefined;
@@ -118,7 +125,7 @@ function prepare(assets: SeriesInput[], base: Currency, fx: Series | undefined, 
 }
 
 const step = (len: number, target = 700) => Math.max(1, Math.ceil(len / target));
-const sample = <T,>(arr: T[], k: number): T[] => arr.filter((_, i) => i % k === 0 || i === arr.length - 1);
+const sample = <T>(arr: T[], k: number): T[] => arr.filter((_, i) => i % k === 0 || i === arr.length - 1);
 
 // ─── Portfolio analysis ───────────────────────────────────────────────────
 export interface FactorDef {
@@ -159,9 +166,26 @@ export interface AnalyzeResult {
   distribution: { edges: number[]; counts: number[]; normal: number[]; var95: number; cvar95: number };
   monthly: PeriodReturn[];
   yearly: PeriodReturn[];
-  risk: { volatility: number; percent: number[]; marginal: number[]; enb: number; diversificationRatio: number; effectiveN: number; avgCorrelation: number; explained: number[] };
+  risk: {
+    volatility: number;
+    percent: number[];
+    marginal: number[];
+    enb: number;
+    diversificationRatio: number;
+    effectiveN: number;
+    avgCorrelation: number;
+    explained: number[];
+  };
   correlation: { ids: string[]; matrix: number[][] };
-  perAsset: { id: string; weight: number; ret: number; vol: number; sharpe: number; riskShare: number; maxDrawdown: number }[];
+  perAsset: {
+    id: string;
+    weight: number;
+    ret: number;
+    vol: number;
+    sharpe: number;
+    riskShare: number;
+    maxDrawdown: number;
+  }[];
   health: HealthReport;
   stress: StressResult[];
   shocks: { id: string; name: string; summary: string; shock: number; impact: number }[];
@@ -174,8 +198,14 @@ function analyze(req: AnalyzeRequest): AnalyzeResult {
   const n = w.length;
   // Constant-mix (daily-rebalanced) portfolio returns — the standard analytic convention.
   const port = p.returns.map((r) => r.reduce((s, x, i) => s + x * w[i], 0));
-  const metrics = computeMetrics(port, { periodsPerYear: p.ppy, riskFree: req.riskFree, benchmark: p.benchReturns });
-  const benchmarkMetrics = p.benchReturns ? computeMetrics(p.benchReturns, { periodsPerYear: p.ppy, riskFree: req.riskFree }) : undefined;
+  const metrics = computeMetrics(port, {
+    periodsPerYear: p.ppy,
+    riskFree: req.riskFree,
+    benchmark: p.benchReturns,
+  });
+  const benchmarkMetrics = p.benchReturns
+    ? computeMetrics(p.benchReturns, { periodsPerYear: p.ppy, riskFree: req.riskFree })
+    : undefined;
 
   const wealth = [req.amount];
   for (const r of port) wealth.push(wealth[wealth.length - 1] * (1 + r));
@@ -198,7 +228,15 @@ function analyze(req: AnalyzeRequest): AnalyzeResult {
   const perAsset = req.info.map((a, i) => {
     const col = p.returns.map((r) => r[i]);
     const m = computeMetrics(col, { periodsPerYear: p.ppy, riskFree: req.riskFree });
-    return { id: a.id, weight: w[i], ret: m.cagr, vol: m.volatility, sharpe: m.sharpe, riskShare: rc.percent[i], maxDrawdown: m.maxDrawdown };
+    return {
+      id: a.id,
+      weight: w[i],
+      ret: m.cagr,
+      vol: m.volatility,
+      sharpe: m.sharpe,
+      riskShare: rc.percent[i],
+      maxDrawdown: m.maxDrawdown,
+    };
   });
 
   // distribution of daily returns
@@ -227,21 +265,41 @@ function analyze(req: AnalyzeRequest): AnalyzeResult {
     maxDrawdown: metrics.maxDrawdown,
     enb: effectiveNumberOfBets(w, cov).enb,
     avgCorrelation: averageCorrelation(w, cov),
-    benchmark: benchmarkMetrics ? { sharpe: benchmarkMetrics.sharpe, maxDrawdown: benchmarkMetrics.maxDrawdown, name: req.benchmarkName ?? 'the benchmark' } : undefined,
+    benchmark: benchmarkMetrics
+      ? {
+          sharpe: benchmarkMetrics.sharpe,
+          maxDrawdown: benchmarkMetrics.maxDrawdown,
+          name: req.benchmarkName ?? 'the benchmark',
+        }
+      : undefined,
     targetEquity: req.targetEquity,
   });
 
   // historical stress on full histories (base currency)
-  const fullHold = req.assets.map((a, i) => ({ id: a.id, weight: w[i], series: toBase(a, req.base, req.fx), proxy: req.proxies?.[a.id] ? toBase(req.proxies[a.id]!, req.base, req.fx) : undefined }));
-  const stress = HISTORICAL_SCENARIOS.map((sc) => historicalStress(fullHold, sc)).filter((s) => s.totalCoverage >= 0.5);
+  const fullHold = req.assets.map((a, i) => ({
+    id: a.id,
+    weight: w[i],
+    series: toBase(a, req.base, req.fx),
+    proxy: req.proxies?.[a.id] ? toBase(req.proxies[a.id]!, req.base, req.fx) : undefined,
+  }));
+  const stress = HISTORICAL_SCENARIOS.map((sc) => historicalStress(fullHold, sc)).filter(
+    (s) => s.totalCoverage >= 0.5,
+  );
 
   // hypothetical shocks (weekly betas, last 3 years)
   const shocks = (req.shockDrivers ?? []).map((d) => {
     const end = p.dates[p.dates.length - 1];
-    const al = alignSeries([...req.assets.map((a) => sliceSeries(toBase(a, req.base, req.fx), end - 3 * YEAR)), sliceSeries(toBase(d.series, req.base, req.fx), end - 3 * YEAR)]);
+    const al = alignSeries([
+      ...req.assets.map((a) => sliceSeries(toBase(a, req.base, req.fx), end - 3 * YEAR)),
+      sliceSeries(toBase(d.series, req.base, req.fx), end - 3 * YEAR),
+    ]);
     const wk = returnsMatrix(resampleAligned(al, 'W').values);
     const drv = wk.map((r) => r[n]);
-    const res = hypotheticalShock(req.assets.map((a, i) => ({ id: a.id, weight: w[i], weeklyReturns: wk.map((r) => r[i]) })), drv, d.shock);
+    const res = hypotheticalShock(
+      req.assets.map((a, i) => ({ id: a.id, weight: w[i], weeklyReturns: wk.map((r) => r[i]) })),
+      drv,
+      d.shock,
+    );
     return { id: d.id, name: d.name, summary: d.summary, shock: d.shock, impact: res.portfolioImpact };
   });
 
@@ -250,7 +308,10 @@ function analyze(req: AnalyzeRequest): AnalyzeResult {
   if (req.factors?.length && req.factorSeries?.length) {
     try {
       const fIds = req.factorSeries.map((f) => f.id);
-      const al = alignSeries([...req.assets.map((a) => toBase(a, req.base, req.fx)), ...req.factorSeries.map((f) => f.series)], { start: p.dates[0] });
+      const al = alignSeries(
+        [...req.assets.map((a) => toBase(a, req.base, req.fx)), ...req.factorSeries.map((f) => f.series)],
+        { start: p.dates[0] },
+      );
       const wk = returnsMatrix(resampleAligned(al, 'W').values);
       const y = wk.map((r) => r.slice(0, n).reduce((s, x, i) => s + x * w[i], 0));
       const col = (id: string) => wk.map((r) => r[n + fIds.indexOf(id)]);
@@ -262,7 +323,11 @@ function analyze(req: AnalyzeRequest): AnalyzeResult {
           return { key: f.key, label: f.label, returns: S ? L.map((v, i) => v - S[i]) : L };
         });
       if (wk.length > 60 && fac.length) {
-        factorModel = factorRegression(y, fac, { periodsPerYear: 52, riskFree: req.riskFree, excessFactorKeys: req.factors.filter((f) => f.excess).map((f) => f.key) });
+        factorModel = factorRegression(y, fac, {
+          periodsPerYear: 52,
+          riskFree: req.riskFree,
+          excessFactorKeys: req.factors.filter((f) => f.excess).map((f) => f.key),
+        });
       }
     } catch {
       factorModel = undefined;
@@ -270,13 +335,37 @@ function analyze(req: AnalyzeRequest): AnalyzeResult {
   }
 
   return {
-    window: { start: fromEpochDay(p.dates[0]), end: fromEpochDay(p.dates[p.dates.length - 1]), years: (p.dates[p.dates.length - 1] - p.dates[0]) / YEAR, points: p.dates.length },
+    window: {
+      start: fromEpochDay(p.dates[0]),
+      end: fromEpochDay(p.dates[p.dates.length - 1]),
+      years: (p.dates[p.dates.length - 1] - p.dates[0]) / YEAR,
+      points: p.dates.length,
+    },
     metrics,
     benchmarkMetrics,
-    equity: { dates: sample(p.dates, k), portfolio: sample(wealth, k), benchmark: benchWealth ? sample(benchWealth, k) : undefined },
-    drawdown: { dates: sample(p.dates, k), portfolio: sample(dd(wealth), k), benchmark: benchWealth ? sample(dd(benchWealth), k) : undefined },
-    rolling: { dates: rIdx.map((i) => p.dates[i + 1]), vol: rIdx.map((i) => rv[i]), sharpe: rIdx.map((i) => rs[i]), beta: rb ? rIdx.map((i) => rb[i]) : undefined },
-    distribution: { edges: hist.edges, counts: hist.counts, normal, var95: metrics.varHistorical, cvar95: metrics.cvarHistorical },
+    equity: {
+      dates: sample(p.dates, k),
+      portfolio: sample(wealth, k),
+      benchmark: benchWealth ? sample(benchWealth, k) : undefined,
+    },
+    drawdown: {
+      dates: sample(p.dates, k),
+      portfolio: sample(dd(wealth), k),
+      benchmark: benchWealth ? sample(dd(benchWealth), k) : undefined,
+    },
+    rolling: {
+      dates: rIdx.map((i) => p.dates[i + 1]),
+      vol: rIdx.map((i) => rv[i]),
+      sharpe: rIdx.map((i) => rs[i]),
+      beta: rb ? rIdx.map((i) => rb[i]) : undefined,
+    },
+    distribution: {
+      edges: hist.edges,
+      counts: hist.counts,
+      normal,
+      var95: metrics.varHistorical,
+      cvar95: metrics.cvarHistorical,
+    },
     monthly: calendarReturns({ dates: p.dates, values: wealth }, 'M'),
     yearly: calendarReturns({ dates: p.dates, values: wealth }, 'Y'),
     risk: {
@@ -289,7 +378,10 @@ function analyze(req: AnalyzeRequest): AnalyzeResult {
       avgCorrelation: averageCorrelation(w, cov),
       explained: pca.explained,
     },
-    correlation: { ids: order.map((i) => req.info[i].id), matrix: order.map((i) => order.map((j) => corr[i][j])) },
+    correlation: {
+      ids: order.map((i) => req.info[i].id),
+      matrix: order.map((i) => order.map((j) => corr[i][j])),
+    },
     perAsset,
     health,
     stress,
@@ -334,7 +426,14 @@ export interface OptimizeResponse {
   explanation: string[];
 }
 
-function estimateMu(p: Prepared, model: ReturnModel, rf: number, cov: Matrix, market?: number[], views?: View[]): number[] {
+function estimateMu(
+  p: Prepared,
+  model: ReturnModel,
+  rf: number,
+  cov: Matrix,
+  market?: number[],
+  views?: View[],
+): number[] {
   const n = p.returns[0].length;
   let mu: number[];
   switch (model) {
@@ -359,7 +458,14 @@ function estimateMu(p: Prepared, model: ReturnModel, rf: number, cov: Matrix, ma
   }
   if (views && views.length) {
     const prior = mu.map((m) => m - rf);
-    const bl = blackLitterman({ cov, prior, views: views.map((v) => ({ ...v, value: v.value - (v.pick.reduce((a, b) => a + b, 0) !== 0 ? rf : 0) })) });
+    const bl = blackLitterman({
+      cov,
+      prior,
+      views: views.map((v) => ({
+        ...v,
+        value: v.value - (v.pick.reduce((a, b) => a + b, 0) !== 0 ? rf : 0),
+      })),
+    });
     mu = bl.posteriorReturns.map((x) => x + rf);
   }
   return mu;
@@ -371,9 +477,17 @@ function runOptimize(req: OptimizeRequest): OptimizeResponse {
   const cov = estimateCovariance(p.returns, p.ppy, req.covariance).cov;
   const mu = estimateMu(p, req.returnModel, req.riskFree, cov, p.benchReturns, req.views);
   const groups = Object.entries(req.classCaps ?? {})
-    .map(([cls, cap]) => ({ label: cls, members: req.info.map((a, i) => (a.assetClass === cls ? i : -1)).filter((i) => i >= 0), upper: cap }))
+    .map(([cls, cap]) => ({
+      label: cls,
+      members: req.info.map((a, i) => (a.assetClass === cls ? i : -1)).filter((i) => i >= 0),
+      upper: cap,
+    }))
     .filter((g) => g.members.length > 0 && g.upper < 1);
-  const constraints = { lower: new Array(n).fill(req.minWeight), upper: new Array(n).fill(req.maxWeight), groups };
+  const constraints = {
+    lower: new Array(n).fill(req.minWeight),
+    upper: new Array(n).fill(req.maxWeight),
+    groups,
+  };
   const common = { mu, cov, riskFree: req.riskFree, constraints };
   const result = optimize({
     ...common,
@@ -404,14 +518,21 @@ function runOptimize(req: OptimizeRequest): OptimizeResponse {
       return [];
     }
   });
-  const vol = (w: number[]) => Math.sqrt(Math.max(w.reduce((s, wi, i) => s + wi * cov[i].reduce((t, c, j) => t + c * w[j], 0), 0), 0));
-  const current = req.currentWeights && req.currentWeights.length === n
-    ? (() => {
-        const r = req.currentWeights!.reduce((s, x, i) => s + x * mu[i], 0);
-        const v = vol(req.currentWeights!);
-        return { ret: r, vol: v, sharpe: v > 0 ? (r - req.riskFree) / v : 0 };
-      })()
-    : undefined;
+  const vol = (w: number[]) =>
+    Math.sqrt(
+      Math.max(
+        w.reduce((s, wi, i) => s + wi * cov[i].reduce((t, c, j) => t + c * w[j], 0), 0),
+        0,
+      ),
+    );
+  const current =
+    req.currentWeights && req.currentWeights.length === n
+      ? (() => {
+          const r = req.currentWeights!.reduce((s, x, i) => s + x * mu[i], 0);
+          const v = vol(req.currentWeights!);
+          return { ret: r, vol: v, sharpe: v > 0 ? (r - req.riskFree) / v : 0 };
+        })()
+      : undefined;
   const { corr } = covToCorr(cov);
   const explanation = req.currentWeights
     ? explain.explainWeightChanges(
@@ -436,7 +557,11 @@ function runOptimize(req: OptimizeRequest): OptimizeResponse {
     current,
     specials,
     mu,
-    window: { start: fromEpochDay(p.dates[0]), end: fromEpochDay(p.dates[p.dates.length - 1]), years: (p.dates[p.dates.length - 1] - p.dates[0]) / YEAR },
+    window: {
+      start: fromEpochDay(p.dates[0]),
+      end: fromEpochDay(p.dates[p.dates.length - 1]),
+      years: (p.dates[p.dates.length - 1] - p.dates[0]) / YEAR,
+    },
     explanation,
   };
 }
@@ -496,7 +621,15 @@ export interface RebalanceStudyRequest {
 
 export interface RebalanceStudyResponse {
   dates: number[];
-  rules: { key: string; label: string; equity: number[]; metrics: Metrics; rebalances: number; turnover: number; costs: number }[];
+  rules: {
+    key: string;
+    label: string;
+    equity: number[];
+    metrics: Metrics;
+    rebalances: number;
+    turnover: number;
+    costs: number;
+  }[];
 }
 
 function runRebalanceStudy(req: RebalanceStudyRequest): RebalanceStudyResponse {
@@ -512,26 +645,64 @@ function runRebalanceStudy(req: RebalanceStudyRequest): RebalanceStudyResponse {
   return {
     dates: sample(p.dates, k),
     rules: rules.map(([key, label, rule]) => {
-      const r = backtest({ dates: p.dates, prices: p.prices, weights: req.weights, rebalance: rule, costBps: req.costBps, initial: req.amount, riskFree: req.riskFree });
-      return { key, label, equity: sample(r.equity, k), metrics: r.metrics, rebalances: r.rebalances, turnover: r.turnover, costs: r.costs };
+      const r = backtest({
+        dates: p.dates,
+        prices: p.prices,
+        weights: req.weights,
+        rebalance: rule,
+        costBps: req.costBps,
+        initial: req.amount,
+        riskFree: req.riskFree,
+      });
+      return {
+        key,
+        label,
+        equity: sample(r.equity, k),
+        metrics: r.metrics,
+        rebalances: r.rebalances,
+        turnover: r.turnover,
+        costs: r.costs,
+      };
     }),
   };
 }
 
 /** Monthly portfolio returns (base currency) for the bootstrap simulator. */
-function monthlyReturns(req: { assets: SeriesInput[]; weights: number[]; base: Currency; fx?: Series; lookbackYears: number }): { returns: number[]; mu: number; sigma: number; years: number } {
+function monthlyReturns(req: {
+  assets: SeriesInput[];
+  weights: number[];
+  base: Currency;
+  fx?: Series;
+  lookbackYears: number;
+}): { returns: number[]; mu: number; sigma: number; years: number } {
   const p = prepare(req.assets, req.base, req.fx, req.lookbackYears);
   const wealth = [1];
-  for (const r of p.returns) wealth.push(wealth[wealth.length - 1] * (1 + r.reduce((s, x, i) => s + x * req.weights[i], 0)));
-  const m = calendarReturns({ dates: p.dates, values: wealth }, 'M').filter((r) => !r.partial).map((r) => r.ret);
+  for (const r of p.returns)
+    wealth.push(wealth[wealth.length - 1] * (1 + r.reduce((s, x, i) => s + x * req.weights[i], 0)));
+  const m = calendarReturns({ dates: p.dates, values: wealth }, 'M')
+    .filter((r) => !r.partial)
+    .map((r) => r.ret);
   const daily = p.returns.map((r) => r.reduce((s, x, i) => s + x * req.weights[i], 0));
-  return { returns: m, mu: mean(daily) * p.ppy, sigma: std(daily) * Math.sqrt(p.ppy), years: (p.dates[p.dates.length - 1] - p.dates[0]) / YEAR };
+  return {
+    returns: m,
+    mu: mean(daily) * p.ppy,
+    sigma: std(daily) * Math.sqrt(p.ppy),
+    years: (p.dates[p.dates.length - 1] - p.dates[0]) / YEAR,
+  };
 }
 
 function simulate(req: MonteCarloRequest): MonteCarloResult {
   return monteCarlo(req);
 }
 
-const api = { analyze, optimize: runOptimize, walkForward: runWalkForward, rebalanceStudy: runRebalanceStudy, monthlyReturns, simulate, lowerBound };
+const api = {
+  analyze,
+  optimize: runOptimize,
+  walkForward: runWalkForward,
+  rebalanceStudy: runRebalanceStudy,
+  monthlyReturns,
+  simulate,
+  lowerBound,
+};
 export type QuantApi = typeof api;
 Comlink.expose(api);

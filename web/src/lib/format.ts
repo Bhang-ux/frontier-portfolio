@@ -16,14 +16,30 @@ export const CLASS_LABEL: Record<AssetClass, string> = {
 };
 
 /** Fixed class → categorical slot (colour follows the entity, never its rank). */
-const CLASS_ORDER: AssetClass[] = ['equity', 'bond', 'commodity', 'real-estate', 'cash', 'crypto', 'currency', 'volatility', 'rate'];
+const CLASS_ORDER: AssetClass[] = [
+  'equity',
+  'bond',
+  'commodity',
+  'real-estate',
+  'cash',
+  'crypto',
+  'currency',
+  'volatility',
+  'rate',
+];
 export const classColor = (c: string) => `var(--s${(CLASS_ORDER.indexOf(c as AssetClass) % 8) + 1})`;
 export const classRank = (c: string) => CLASS_ORDER.indexOf(c as AssetClass);
 
 export const seriesColor = (i: number) => (i < 8 ? `var(--s${i + 1})` : 'var(--text-3)');
 export const OTHER_COLOR = 'var(--text-3)';
 
-export const REGION_LABEL: Record<string, string> = { US: 'United States', IN: 'India', DEV: 'Developed ex-US', EM: 'Emerging markets', GLOBAL: 'Global' };
+export const REGION_LABEL: Record<string, string> = {
+  US: 'United States',
+  IN: 'India',
+  DEV: 'Developed ex-US',
+  EM: 'Emerging markets',
+  GLOBAL: 'Global',
+};
 
 export const CURRENCY_SYMBOL: Record<Currency, string> = { USD: '$', INR: '₹' };
 
@@ -45,7 +61,12 @@ export function fmtChange(a: AssetSnapshot): string {
   return signedPct(a.quote.changePct, 2);
 }
 
-export const tone = (x: number | null | undefined) => (x === null || x === undefined || !Number.isFinite(x) || x === 0 ? 'text-ink-2' : x > 0 ? 'text-pos' : 'text-neg');
+export const tone = (x: number | null | undefined) =>
+  x === null || x === undefined || !Number.isFinite(x) || x === 0
+    ? 'text-ink-2'
+    : x > 0
+      ? 'text-pos'
+      : 'text-neg';
 
 export function timeAgo(iso: string | number, now = Date.now()): string {
   const t = typeof iso === 'number' ? iso : Date.parse(iso);
@@ -58,9 +79,18 @@ export function timeAgo(iso: string | number, now = Date.now()): string {
   return `${Math.round(h / 24)} days ago`;
 }
 
-export const fmtDate = (day: number | string, opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }) => {
+export const fmtDate = (
+  day: number | string,
+  opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' },
+) => {
   const d = typeof day === 'number' ? new Date(day * 86_400_000) : new Date(day);
   return d.toLocaleDateString('en-GB', { timeZone: 'UTC', ...opts });
 };
 
-export const SIGNAL_LABEL = { strong: 'Strong', positive: 'Positive', neutral: 'Neutral', negative: 'Negative', weak: 'Weak' } as const;
+export const SIGNAL_LABEL = {
+  strong: 'Strong',
+  positive: 'Positive',
+  neutral: 'Neutral',
+  negative: 'Negative',
+  weak: 'Weak',
+} as const;

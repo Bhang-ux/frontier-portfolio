@@ -10,13 +10,17 @@ export const STATUS: Record<HealthStatus, { color: string; label: string; Icon: 
   bad: { color: 'var(--critical)', label: 'Poor', Icon: CircleX },
 };
 
-const gradeStatus = (score: number): HealthStatus => (score >= 80 ? 'good' : score >= 60 ? 'ok' : score >= 40 ? 'warn' : 'bad');
+const gradeStatus = (score: number): HealthStatus =>
+  score >= 80 ? 'good' : score >= 60 ? 'ok' : score >= 40 ? 'warn' : 'bad';
 
 export function HealthCard({ h }: { h: HealthReport }) {
   const st = STATUS[gradeStatus(h.score)];
   return (
     <Card className="card-pad">
-      <CardHeader title="Portfolio health" subtitle="Five checks every professional runs, rolled into one score." />
+      <CardHeader
+        title="Portfolio health"
+        subtitle="Five checks every professional runs, rolled into one score."
+      />
       <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-start">
         <ScoreRing
           value={h.score}

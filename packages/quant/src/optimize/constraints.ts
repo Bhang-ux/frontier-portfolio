@@ -43,7 +43,8 @@ export function feasibilityIssues(c: Constraints): string[] {
   const issues: string[] = [];
   const sumL = c.lower.reduce((a, b) => a + b, 0);
   const sumU = c.upper.reduce((a, b) => a + b, 0);
-  if (sumL > c.total + 1e-9) issues.push(`Minimum weights add up to ${(sumL * 100).toFixed(1)}% — more than 100%.`);
+  if (sumL > c.total + 1e-9)
+    issues.push(`Minimum weights add up to ${(sumL * 100).toFixed(1)}% — more than 100%.`);
   if (sumU < c.total - 1e-9)
     issues.push(`Maximum weights add up to only ${(sumU * 100).toFixed(1)}% — raise the per-asset cap.`);
   for (const g of c.groups) {
@@ -88,7 +89,9 @@ export function projectCappedSimplex(v: Vector, lower: Vector, upper: Vector, to
   // Distribute the (tiny) residual over free coordinates for an exact budget.
   const resid = total - w.reduce((a, b) => a + b, 0);
   if (Math.abs(resid) > 0) {
-    const free = w.map((x, i) => (x > lower[i] + 1e-15 && x < upper[i] - 1e-15 ? i : -1)).filter((i) => i >= 0);
+    const free = w
+      .map((x, i) => (x > lower[i] + 1e-15 && x < upper[i] - 1e-15 ? i : -1))
+      .filter((i) => i >= 0);
     if (free.length) for (const i of free) w[i] += resid / free.length;
   }
   return w;
@@ -109,10 +112,11 @@ export type Projector = (v: Vector) => Vector;
 
 const groupsAreDisjoint = (groups: GroupConstraint[]): boolean => {
   const seen = new Set<number>();
-  for (const g of groups) for (const i of g.members) {
-    if (seen.has(i)) return false;
-    seen.add(i);
-  }
+  for (const g of groups)
+    for (const i of g.members) {
+      if (seen.has(i)) return false;
+      seen.add(i);
+    }
   return true;
 };
 
@@ -131,7 +135,8 @@ function projectDisjointGroups(v: Vector, c: Constraints): Vector {
   const lo = c.groups.map((g) => g.lower ?? -Infinity);
   const hi = c.groups.map((g) => g.upper ?? Infinity);
   const clipAt = (i: number, shift: number) => Math.min(c.upper[i], Math.max(c.lower[i], v[i] - shift));
-  const groupSum = (k: number, shift: number) => c.groups[k].members.reduce((s, i) => s + clipAt(i, shift), 0);
+  const groupSum = (k: number, shift: number) =>
+    c.groups[k].members.reduce((s, i) => s + clipAt(i, shift), 0);
   const median = (a: number, x: number, b: number) => Math.min(b, Math.max(a, x));
   const total = (tau: number) => {
     let s = 0;

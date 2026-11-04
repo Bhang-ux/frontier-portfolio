@@ -12,8 +12,20 @@ export function LogoMark({ size = 28 }: { size?: number }) {
       </defs>
       <rect width="32" height="32" rx="9" fill="url(#fg)" />
       {/* an efficient frontier: concave curve with a tangency point */}
-      <path d="M7 24 C 9 15, 15 9.5, 25 8" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
-      <path d="M7 21.5 L 25 12.8" stroke="#fff" strokeOpacity="0.45" strokeWidth="1.4" strokeLinecap="round" />
+      <path
+        d="M7 24 C 9 15, 15 9.5, 25 8"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M7 21.5 L 25 12.8"
+        stroke="#fff"
+        strokeOpacity="0.45"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
       <circle cx="16.6" cy="12.1" r="2.6" fill="#fff" />
     </svg>
   );
@@ -26,7 +38,9 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       {!compact && (
         <span className="flex flex-col leading-none">
           <span className="text-[17px] font-semibold tracking-tight text-ink">Frontier</span>
-          <span className="mt-0.5 text-[10.5px] font-medium uppercase tracking-[0.14em] text-ink-3">Portfolio intelligence</span>
+          <span className="mt-0.5 text-[10.5px] font-medium uppercase tracking-[0.14em] text-ink-3">
+            Portfolio intelligence
+          </span>
         </span>
       )}
     </Link>

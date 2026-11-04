@@ -5,7 +5,10 @@
 import { interpolateLab } from 'd3-interpolate';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 
-export function useSize<T extends HTMLElement>(): [(el: T | null) => void, { width: number; height: number }] {
+export function useSize<T extends HTMLElement>(): [
+  (el: T | null) => void,
+  { width: number; height: number },
+] {
   const [size, setSize] = useState({ width: 0, height: 0 });
   const ro = useRef<ResizeObserver | null>(null);
   const ref = useCallback((el: T | null) => {
@@ -13,7 +16,11 @@ export function useSize<T extends HTMLElement>(): [(el: T | null) => void, { wid
     if (!el) return;
     ro.current = new ResizeObserver(([entry]) => {
       const cr = entry.contentRect;
-      setSize((s) => (Math.abs(s.width - cr.width) < 0.5 && Math.abs(s.height - cr.height) < 0.5 ? s : { width: cr.width, height: cr.height }));
+      setSize((s) =>
+        Math.abs(s.width - cr.width) < 0.5 && Math.abs(s.height - cr.height) < 0.5
+          ? s
+          : { width: cr.width, height: cr.height },
+      );
     });
     ro.current.observe(el);
   }, []);
@@ -57,9 +64,12 @@ export function diverging(t: number, theme: 'dark' | 'light'): string {
 
 /** Readable label colour inside a fill (white or near-black by luminance). */
 export function inkOn(hex: string): string {
-  const m = hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i) ?? hex.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+  const m =
+    hex.match(/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i) ?? hex.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
   if (!m) return '#ffffff';
-  const [r, g, b] = (hex.startsWith('rgb') ? m.slice(1, 4).map(Number) : m.slice(1, 4).map((h) => parseInt(h, 16))).map((v) => {
+  const [r, g, b] = (
+    hex.startsWith('rgb') ? m.slice(1, 4).map(Number) : m.slice(1, 4).map((h) => parseInt(h, 16))
+  ).map((v) => {
     const c = v / 255;
     return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
   });
@@ -76,7 +86,8 @@ export function timeTicks(dates: number[], maxTicks: number): { index: number; l
   if (n < 2) return [];
   const span = dates[n - 1] - dates[0];
   type G = 'year' | 'quarter' | 'month' | 'week' | 'day';
-  const g: G = span > 3 * 365 ? 'year' : span > 300 ? 'quarter' : span > 75 ? 'month' : span > 12 ? 'week' : 'day';
+  const g: G =
+    span > 3 * 365 ? 'year' : span > 300 ? 'quarter' : span > 75 ? 'month' : span > 12 ? 'week' : 'day';
   const key = (day: number) => {
     const d = dOf(day);
     if (g === 'year') return d.getUTCFullYear();
@@ -88,7 +99,10 @@ export function timeTicks(dates: number[], maxTicks: number): { index: number; l
   const fmt = (day: number) => {
     const d = dOf(day);
     if (g === 'year') return String(d.getUTCFullYear());
-    if (g === 'quarter' || g === 'month') return d.getUTCMonth() === 0 ? String(d.getUTCFullYear()) : `${MONTHS[d.getUTCMonth()]}${g === 'quarter' ? ` ’${String(d.getUTCFullYear()).slice(2)}` : ''}`;
+    if (g === 'quarter' || g === 'month')
+      return d.getUTCMonth() === 0
+        ? String(d.getUTCFullYear())
+        : `${MONTHS[d.getUTCMonth()]}${g === 'quarter' ? ` ’${String(d.getUTCFullYear()).slice(2)}` : ''}`;
     return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
   };
   const idx: number[] = [];
@@ -102,17 +116,44 @@ export const fmtTooltipDate = (day: number) => {
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 };
 
-export function TooltipBox({ x, y, width, children, containerWidth }: { x: number; y: number; width?: number; children: ReactNode; containerWidth: number }) {
+export function TooltipBox({
+  x,
+  y,
+  width,
+  children,
+  containerWidth,
+}: {
+  x: number;
+  y: number;
+  width?: number;
+  children: ReactNode;
+  containerWidth: number;
+}) {
   const w = width ?? 200;
   const left = x + 14 + w > containerWidth ? Math.max(4, x - 14 - w) : x + 14;
   return (
-    <div className="pointer-events-none absolute z-20 rounded-xl border border-line-strong bg-surface/95 px-3 py-2 text-xs shadow-2xl backdrop-blur" style={{ left, top: Math.max(0, y), width: w }} role="status" aria-live="polite">
+    <div
+      className="pointer-events-none absolute z-20 rounded-xl border border-line-strong bg-surface/95 px-3 py-2 text-xs shadow-2xl backdrop-blur"
+      style={{ left, top: Math.max(0, y), width: w }}
+      role="status"
+      aria-live="polite"
+    >
       {children}
     </div>
   );
 }
 
-export function TooltipRow({ color, label, value, kind = 'line' }: { color: string; label: ReactNode; value: ReactNode; kind?: 'line' | 'rect' | 'dot' }) {
+export function TooltipRow({
+  color,
+  label,
+  value,
+  kind = 'line',
+}: {
+  color: string;
+  label: ReactNode;
+  value: ReactNode;
+  kind?: 'line' | 'rect' | 'dot';
+}) {
   return (
     <div className="flex items-center justify-between gap-3 py-0.5">
       <span className="flex min-w-0 items-center gap-1.5 text-ink-3">
@@ -130,7 +171,11 @@ export function TooltipRow({ color, label, value, kind = 'line' }: { color: stri
   );
 }
 
-export function Legend({ items }: { items: { label: string; color: string; kind?: 'line' | 'rect' | 'dot' }[] }) {
+export function Legend({
+  items,
+}: {
+  items: { label: string; color: string; kind?: 'line' | 'rect' | 'dot' }[];
+}) {
   if (items.length < 2) return null;
   return (
     <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-2" aria-label="Legend">

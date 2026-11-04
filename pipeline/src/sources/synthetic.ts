@@ -35,15 +35,32 @@ interface Profile {
 }
 
 function profile(a: AssetMeta): Profile {
-  if (a.assetClass === 'crypto') return { mu: 0.45, vol: 0.75, beta: 1, factor: 'CRYPTO', level: a.id === 'BTC-USD' ? 400 : 50 };
+  if (a.assetClass === 'crypto')
+    return { mu: 0.45, vol: 0.75, beta: 1, factor: 'CRYPTO', level: a.id === 'BTC-USD' ? 400 : 50 };
   if (a.assetClass === 'bond') {
     const v = a.id === 'TLT' ? 0.14 : a.id === 'SHY' ? 0.015 : a.id === 'HYG' ? 0.08 : 0.055;
-    return { mu: 0.03 + v * 0.1, vol: v, beta: a.id === 'HYG' ? 0.3 : 1, factor: a.id === 'HYG' ? 'US' : 'BOND', level: 100 };
+    return {
+      mu: 0.03 + v * 0.1,
+      vol: v,
+      beta: a.id === 'HYG' ? 0.3 : 1,
+      factor: a.id === 'HYG' ? 'US' : 'BOND',
+      level: 100,
+    };
   }
-  if (a.assetClass === 'commodity') return { mu: 0.06, vol: a.id.includes('SILVER') || a.id === 'SLV' ? 0.28 : 0.16, beta: 0.8, factor: 'GOLD', level: a.region === 'IN' ? 40 : 120 };
-  if (a.assetClass === 'volatility') return { mu: 0, vol: 0.9, beta: -3, factor: a.region === 'IN' ? 'IN' : 'US', level: 18 };
-  if (a.assetClass === 'rate') return { mu: 0, vol: 0.25, beta: 0.2, factor: 'BOND', level: a.id === 'IRX' ? 3.5 : 4 };
-  if (a.assetClass === 'currency') return { mu: 0.02, vol: 0.06, beta: 0, factor: 'NONE', level: a.id === 'USDINR' ? 45 : 90 };
+  if (a.assetClass === 'commodity')
+    return {
+      mu: 0.06,
+      vol: a.id.includes('SILVER') || a.id === 'SLV' ? 0.28 : 0.16,
+      beta: 0.8,
+      factor: 'GOLD',
+      level: a.region === 'IN' ? 40 : 120,
+    };
+  if (a.assetClass === 'volatility')
+    return { mu: 0, vol: 0.9, beta: -3, factor: a.region === 'IN' ? 'IN' : 'US', level: 18 };
+  if (a.assetClass === 'rate')
+    return { mu: 0, vol: 0.25, beta: 0.2, factor: 'BOND', level: a.id === 'IRX' ? 3.5 : 4 };
+  if (a.assetClass === 'currency')
+    return { mu: 0.02, vol: 0.06, beta: 0, factor: 'NONE', level: a.id === 'USDINR' ? 45 : 90 };
   const stock = a.kind === 'stock';
   const region = a.region === 'IN' ? 'IN' : 'US';
   return {
@@ -56,9 +73,14 @@ function profile(a: AssetMeta): Profile {
 }
 
 /** Deterministic hash of a string → 32-bit seed. */
-const seedOf = (s: string) => [...s].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619), 2166136261) >>> 0;
+const seedOf = (s: string) =>
+  [...s].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619), 2166136261) >>> 0;
 
-export function syntheticUniverse(assets: AssetMeta[], endDay: number, startIso = '2005-01-03'): Map<string, Series> {
+export function syntheticUniverse(
+  assets: AssetMeta[],
+  endDay: number,
+  startIso = '2005-01-03',
+): Map<string, Series> {
   const start = toEpochDay(startIso);
   const days: number[] = [];
   for (let d = start; d <= endDay; d++) days.push(d);
@@ -92,7 +114,9 @@ export function syntheticUniverse(assets: AssetMeta[], endDay: number, startIso 
     for (let i = 0; i < days.length; i++) {
       const d = days[i];
       if (d < incept || (weekdaysOnly && !isWeekday(d))) continue;
-      const shock = Math.sign(p.beta) * sysShare * factors[p.factor][i] + Math.sqrt(1 - sysShare * sysShare) * rng.normal();
+      const shock =
+        Math.sign(p.beta) * sysShare * factors[p.factor][i] +
+        Math.sqrt(1 - sysShare * sysShare) * rng.normal();
       if (a.assetClass === 'rate' || a.assetClass === 'volatility') {
         // mean-reverting level (yields, VIX)
         const target = p.level;

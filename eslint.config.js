@@ -14,6 +14,7 @@ export default tseslint.config(
       'docs/interview-guide/out/**',
       'playwright-report/**',
       'test-results/**',
+      '**/.venv/**',
     ],
   },
   js.configs.recommended,

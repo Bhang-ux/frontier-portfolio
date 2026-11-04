@@ -47,7 +47,8 @@ export function useSnapshot() {
     queryKey: ['snapshot', hash],
     queryFn: async () => {
       const s = await fetchJson<Snapshot>(dataUrl(`${manifest.data!.snapshot.file}?v=${hash}`));
-      if (s.schemaVersion !== SCHEMA_VERSION) throw new DataError('The data format changed — please reload the page.');
+      if (s.schemaVersion !== SCHEMA_VERSION)
+        throw new DataError('The data format changed — please reload the page.');
       return s;
     },
     enabled: !!hash,
@@ -66,7 +67,12 @@ export interface MarketData {
 }
 
 /** Snapshot plus convenient lookups; `data` is undefined while loading. */
-export function useMarketData(): { data?: MarketData; isLoading: boolean; error: Error | null; isFetching: boolean } {
+export function useMarketData(): {
+  data?: MarketData;
+  isLoading: boolean;
+  error: Error | null;
+  isFetching: boolean;
+} {
   const { manifest, snapshot } = useSnapshot();
   const data = useMemo<MarketData | undefined>(() => {
     if (!snapshot.data || !manifest.data) return undefined;
@@ -87,7 +93,11 @@ export function useMarketData(): { data?: MarketData; isLoading: boolean; error:
 }
 
 /** Lazily load full daily histories for a set of instruments. */
-export function useHistories(ids: string[]): { data: Record<string, Series>; isLoading: boolean; error: Error | null } {
+export function useHistories(ids: string[]): {
+  data: Record<string, Series>;
+  isLoading: boolean;
+  error: Error | null;
+} {
   const manifest = useManifest();
   const uniq = useMemo(() => [...new Set(ids)].sort(), [ids]);
   return useQueries({
@@ -95,7 +105,10 @@ export function useHistories(ids: string[]): { data: Record<string, Series>; isL
       const hash = manifest.data?.histories[id]?.hash;
       return {
         queryKey: ['history', id, hash],
-        queryFn: async () => decodeHistory(await fetchJson<HistoryFile>(dataUrl(`history/${encodeURIComponent(id)}.json?v=${hash}`))),
+        queryFn: async () =>
+          decodeHistory(
+            await fetchJson<HistoryFile>(dataUrl(`history/${encodeURIComponent(id)}.json?v=${hash}`)),
+          ),
         enabled: !!hash,
         staleTime: Infinity,
         gcTime: 30 * 60_000,
@@ -110,7 +123,9 @@ export function useHistories(ids: string[]): { data: Record<string, Series>; isL
       return {
         data,
         isLoading: !manifest.data || results.some((r) => r.isLoading),
-        error: (results.find((r) => r.error)?.error as Error | undefined) ?? (missing.length ? new DataError(`No data for ${missing.join(', ')}`) : null),
+        error:
+          (results.find((r) => r.error)?.error as Error | undefined) ??
+          (missing.length ? new DataError(`No data for ${missing.join(', ')}`) : null),
       };
     },
   });

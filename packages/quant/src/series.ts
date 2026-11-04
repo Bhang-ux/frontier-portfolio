@@ -84,7 +84,8 @@ export function alignSeries(
   let dates: number[];
   if (calendar === 'intersection') {
     const counts = new Map<number, number>();
-    for (const s of series) for (const d of s.dates) if (d >= start && d <= end) counts.set(d, (counts.get(d) ?? 0) + 1);
+    for (const s of series)
+      for (const d of s.dates) if (d >= start && d <= end) counts.set(d, (counts.get(d) ?? 0) + 1);
     dates = [...counts.entries()].filter(([, c]) => c === series.length).map(([d]) => d);
   } else {
     const set = new Set<number>();

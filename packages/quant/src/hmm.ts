@@ -43,7 +43,9 @@ function forwardBackward(x: number[], p: HmmParams) {
   const K = p.pi.length;
   const alpha: number[][] = Array.from({ length: T }, () => new Array<number>(K).fill(0));
   const beta: number[][] = Array.from({ length: T }, () => new Array<number>(K).fill(1));
-  const B: number[][] = x.map((xt) => p.means.map((m, k) => Math.max(emission(xt, m, p.variances[k]), 1e-300)));
+  const B: number[][] = x.map((xt) =>
+    p.means.map((m, k) => Math.max(emission(xt, m, p.variances[k]), 1e-300)),
+  );
   const c = new Array<number>(T).fill(0);
   for (let k = 0; k < K; k++) alpha[0][k] = p.pi[k] * B[0][k];
   c[0] = alpha[0].reduce((a, b) => a + b, 0) || 1e-300;
@@ -124,7 +126,8 @@ function viterbi(x: number[], p: HmmParams): number[] {
   const logA = p.A.map((r) => r.map((v) => Math.log(Math.max(v, 1e-300))));
   const delta: number[][] = Array.from({ length: T }, () => new Array<number>(K).fill(-Infinity));
   const psi: number[][] = Array.from({ length: T }, () => new Array<number>(K).fill(0));
-  const logB = (t: number, k: number) => -0.5 * (LOG_2PI + Math.log(p.variances[k]) + (x[t] - p.means[k]) ** 2 / p.variances[k]);
+  const logB = (t: number, k: number) =>
+    -0.5 * (LOG_2PI + Math.log(p.variances[k]) + (x[t] - p.means[k]) ** 2 / p.variances[k]);
   for (let k = 0; k < K; k++) delta[0][k] = Math.log(Math.max(p.pi[k], 1e-300)) + logB(0, k);
   for (let t = 1; t < T; t++) {
     for (let j = 0; j < K; j++) {
@@ -165,12 +168,19 @@ export function fitGaussianHmm(
     const A = Array.from({ length: K }, (_, i) =>
       Array.from({ length: K }, (_, j) => (i === j ? stay : (1 - stay) / Math.max(K - 1, 1))),
     );
-    const fit = baumWelch(x, { pi: new Array<number>(K).fill(1 / K), A, means, variances }, opts.maxIter ?? 300, opts.tol ?? 1e-8);
+    const fit = baumWelch(
+      x,
+      { pi: new Array<number>(K).fill(1 / K), A, means, variances },
+      opts.maxIter ?? 300,
+      opts.tol ?? 1e-8,
+    );
     if (!best || fit.logLik > best.logLik) best = fit;
   }
   const b = best!;
   // sort states by volatility (state 0 = calmest)
-  const order = b.params.variances.map((_, k) => k).sort((i, j) => b.params.variances[i] - b.params.variances[j]);
+  const order = b.params.variances
+    .map((_, k) => k)
+    .sort((i, j) => b.params.variances[i] - b.params.variances[j]);
   const params: HmmParams = {
     pi: order.map((k) => b.params.pi[k]),
     A: order.map((i) => order.map((j) => b.params.A[i][j])),
@@ -194,7 +204,8 @@ export function fitGaussianHmm(
 }
 
 /** Expected duration (periods) of each state: 1 / (1 − Aᵢᵢ). */
-export const expectedDurations = (A: number[][]): number[] => A.map((row, i) => 1 / Math.max(1 - row[i], 1e-9));
+export const expectedDurations = (A: number[][]): number[] =>
+  A.map((row, i) => 1 / Math.max(1 - row[i], 1e-9));
 
 /** Stationary distribution of a transition matrix (power iteration). */
 export function stationaryDistribution(A: number[][]): number[] {
@@ -209,4 +220,3 @@ export function stationaryDistribution(A: number[][]): number[] {
   }
   return p;
 }
-

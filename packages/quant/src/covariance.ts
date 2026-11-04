@@ -194,7 +194,9 @@ export function ledoitWolfConstantCorrelation(X: Matrix): ShrinkageResult {
 export function covToCorr(cov: Matrix): { corr: Matrix; std: Vector } {
   const sd = cov.map((row, i) => Math.sqrt(Math.max(row[i], 0)));
   const corr = cov.map((row, i) =>
-    row.map((v, j) => (i === j ? 1 : sd[i] > 0 && sd[j] > 0 ? Math.max(-1, Math.min(1, v / (sd[i] * sd[j]))) : 0)),
+    row.map((v, j) =>
+      i === j ? 1 : sd[i] > 0 && sd[j] > 0 ? Math.max(-1, Math.min(1, v / (sd[i] * sd[j]))) : 0,
+    ),
   );
   return { corr, std: sd };
 }
@@ -209,7 +211,10 @@ export function corrToCov(corr: Matrix, sd: Vector): Matrix {
  * band are statistically indistinguishable from noise; we replace them with
  * their average (preserving the trace) and keep the "signal" eigenvalues.
  */
-export function denoiseCorrelation(corr: Matrix, T: number): { corr: Matrix; signalFactors: number; lambdaMax: number } {
+export function denoiseCorrelation(
+  corr: Matrix,
+  T: number,
+): { corr: Matrix; signalFactors: number; lambdaMax: number } {
   const n = corr.length;
   const { values, vectors } = eigenSymmetric(corr);
   const q = T / n;

@@ -155,9 +155,24 @@ export const usePortfolios = create<PortfolioState>()(
         return np.id;
       },
       update: (id, patch) =>
-        set({ portfolios: get().portfolios.map((p) => (p.id === id ? { ...p, ...patch, updatedAt: Date.now() } : p)) }),
+        set({
+          portfolios: get().portfolios.map((p) =>
+            p.id === id ? { ...p, ...patch, updatedAt: Date.now() } : p,
+          ),
+        }),
       setHoldings: (id, holdings) =>
-        set({ portfolios: get().portfolios.map((p) => (p.id === id ? { ...p, holdings, updatedAt: Date.now(), origin: p.origin === 'example' ? 'custom' : p.origin } : p)) }),
+        set({
+          portfolios: get().portfolios.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  holdings,
+                  updatedAt: Date.now(),
+                  origin: p.origin === 'example' ? 'custom' : p.origin,
+                }
+              : p,
+          ),
+        }),
       remove: (id) => {
         const rest = get().portfolios.filter((p) => p.id !== id);
         const list = rest.length ? rest : [fresh(EXAMPLES[get().active().currency])];
@@ -169,7 +184,12 @@ export const usePortfolios = create<PortfolioState>()(
         return get().create({ ...src, name: `${src.name} (copy)`, origin: 'custom' });
       },
     }),
-    { name: 'frontier-portfolios', version: 1, storage: createJSONStorage(() => localStorage), partialize: (s) => ({ portfolios: s.portfolios, activeId: s.activeId }) },
+    {
+      name: 'frontier-portfolios',
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      partialize: (s) => ({ portfolios: s.portfolios, activeId: s.activeId }),
+    },
   ),
 );
 

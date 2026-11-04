@@ -63,10 +63,12 @@ export function TimeSeriesChart({
   const geo = useMemo(() => {
     let lo = Infinity;
     let hi = -Infinity;
-    for (const s of series) for (const v of s.values) if (v !== null && Number.isFinite(v)) {
-      lo = Math.min(lo, v);
-      hi = Math.max(hi, v);
-    }
+    for (const s of series)
+      for (const v of s.values)
+        if (v !== null && Number.isFinite(v)) {
+          lo = Math.min(lo, v);
+          hi = Math.max(hi, v);
+        }
     if (baseline !== undefined) {
       lo = Math.min(lo, baseline);
       hi = Math.max(hi, baseline);
@@ -76,12 +78,18 @@ export function TimeSeriesChart({
     if (lo === hi) [lo, hi] = [lo - Math.abs(lo || 1) * 0.05, hi + Math.abs(hi || 1) * 0.05];
     const useLog = log && lo > 0;
     const y0 = useLog ? scaleLog().domain([lo, hi]).nice() : scaleLinear().domain([lo, hi]).nice(5);
-    const ticks = useLog ? (y0 as ReturnType<typeof scaleLog>).ticks(5).filter((_, i, a) => a.length <= 6 || i % Math.ceil(a.length / 6) === 0) : y0.ticks(5);
+    const ticks = useLog
+      ? (y0 as ReturnType<typeof scaleLog>)
+          .ticks(5)
+          .filter((_, i, a) => a.length <= 6 || i % Math.ceil(a.length / 6) === 0)
+      : y0.ticks(5);
     const labelW = Math.max(...ticks.map((t) => textWidth(yFormat(t)))) + 10;
     const m = { top: 10, right: 10, bottom: 24, left: Math.max(36, labelW) };
     const iw = Math.max(10, width - m.left - m.right);
     const ih = Math.max(10, height - m.top - m.bottom);
-    const x = scaleLinear().domain([0, Math.max(1, n - 1)]).range([0, iw]);
+    const x = scaleLinear()
+      .domain([0, Math.max(1, n - 1)])
+      .range([0, iw]);
     const y = y0.range([ih, 0]);
     return { m, iw, ih, x, y, ticks };
   }, [series, width, height, n, log, baseline, yDomain, yFormat]);
@@ -99,7 +107,7 @@ export function TimeSeriesChart({
         .x((_, i) => x(i))
         .y0(baseline !== undefined && !log ? y(baseline) : ih)
         .y1((v) => y(v as number));
-      return { key: s.key, line: ln(s.values) ?? '', area: s.area ? ar(s.values) ?? '' : '' };
+      return { key: s.key, line: ln(s.values) ?? '', area: s.area ? (ar(s.values) ?? '') : '' };
     });
   }, [series, geo, log, baseline]);
 
@@ -138,12 +146,27 @@ export function TimeSeriesChart({
     <div className="w-full">
       {showLegend && series.length > 1 && (
         <div className="mb-2">
-          <Legend items={series.map((s) => ({ label: s.label, color: s.color, kind: s.area && series.length === 1 ? 'rect' : 'line' }))} />
+          <Legend
+            items={series.map((s) => ({
+              label: s.label,
+              color: s.color,
+              kind: s.area && series.length === 1 ? 'rect' : 'line',
+            }))}
+          />
         </div>
       )}
       <div ref={ref} className="relative w-full" style={{ height }}>
         {width > 0 && n > 1 && (
-          <svg width={width} height={height} role="img" aria-label={ariaLabel} tabIndex={0} onKeyDown={onKey} onBlur={() => setIdx(null)} className="block overflow-visible outline-none">
+          <svg
+            width={width}
+            height={height}
+            role="img"
+            aria-label={ariaLabel}
+            tabIndex={0}
+            onKeyDown={onKey}
+            onBlur={() => setIdx(null)}
+            className="block overflow-visible outline-none"
+          >
             <defs>
               <clipPath id={`c${clipId}`}>
                 <rect x={0} y={-2} width={iw} height={ih + 4} />
@@ -151,7 +174,14 @@ export function TimeSeriesChart({
             </defs>
             <g transform={`translate(${m.left},${m.top})`}>
               {bands.map((b, i) => (
-                <rect key={i} x={x(b.from)} width={Math.max(1, x(b.to) - x(b.from))} y={0} height={ih} fill={b.color} />
+                <rect
+                  key={i}
+                  x={x(b.from)}
+                  width={Math.max(1, x(b.to) - x(b.from))}
+                  y={0}
+                  height={ih}
+                  fill={b.color}
+                />
               ))}
               {ticks.map((t) => (
                 <g key={t} transform={`translate(0,${y(t)})`}>
@@ -161,10 +191,18 @@ export function TimeSeriesChart({
                   </text>
                 </g>
               ))}
-              {baseline !== undefined && !log && <line x1={0} x2={iw} y1={y(baseline)} y2={y(baseline)} stroke="var(--axis)" strokeWidth={1} />}
+              {baseline !== undefined && !log && (
+                <line x1={0} x2={iw} y1={y(baseline)} y2={y(baseline)} stroke="var(--axis)" strokeWidth={1} />
+              )}
               <line x1={0} x2={iw} y1={ih} y2={ih} stroke="var(--axis)" strokeWidth={1} />
               {xticks.map((t) => (
-                <text key={t.index} x={x(t.index)} y={ih + 16} textAnchor="middle" className="num fill-[var(--text-3)] text-[11px]">
+                <text
+                  key={t.index}
+                  x={x(t.index)}
+                  y={ih + 16}
+                  textAnchor="middle"
+                  className="num fill-[var(--text-3)] text-[11px]"
+                >
                   {t.label}
                 </text>
               ))}
@@ -173,7 +211,15 @@ export function TimeSeriesChart({
                   p.area ? <path key={`a${p.key}`} d={p.area} fill={series[i].color} opacity={0.12} /> : null,
                 )}
                 {paths.map((p, i) => (
-                  <path key={p.key} d={p.line} fill="none" stroke={series[i].color} strokeWidth={series[i].width ?? 2} strokeLinejoin="round" strokeLinecap="round" />
+                  <path
+                    key={p.key}
+                    d={p.line}
+                    fill="none"
+                    stroke={series[i].color}
+                    strokeWidth={series[i].width ?? 2}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  />
                 ))}
               </g>
               {hover !== null && (
@@ -182,20 +228,41 @@ export function TimeSeriesChart({
                   {series.map((s) => {
                     const v = s.values[hover];
                     if (v === null || !Number.isFinite(v) || (log && v <= 0)) return null;
-                    return <circle key={s.key} cx={hx} cy={y(v)} r={4} fill={s.color} stroke="var(--surface)" strokeWidth={2} />;
+                    return (
+                      <circle
+                        key={s.key}
+                        cx={hx}
+                        cy={y(v)}
+                        r={4}
+                        fill={s.color}
+                        stroke="var(--surface)"
+                        strokeWidth={2}
+                      />
+                    );
                   })}
                 </g>
               )}
-              <rect width={iw} height={ih} fill="transparent" onPointerMove={onMove} onPointerLeave={() => setIdx(null)} style={{ touchAction: 'pan-y' }} />
+              <rect
+                width={iw}
+                height={ih}
+                fill="transparent"
+                onPointerMove={onMove}
+                onPointerLeave={() => setIdx(null)}
+                style={{ touchAction: 'pan-y' }}
+              />
             </g>
           </svg>
         )}
         {hover !== null && width > 0 && (
           <TooltipBox x={m.left + hx} y={m.top + 4} containerWidth={width}>
-            <div className="mb-1 font-medium text-ink-2">{xLabel ? xLabel(hover) : fmtTooltipDate(dates[hover])}</div>
+            <div className="mb-1 font-medium text-ink-2">
+              {xLabel ? xLabel(hover) : fmtTooltipDate(dates[hover])}
+            </div>
             {series.map((s) => {
               const v = s.values[hover];
-              return v === null || !Number.isFinite(v) ? null : <TooltipRow key={s.key} color={s.color} label={s.label} value={fmtV(v, s)} />;
+              return v === null || !Number.isFinite(v) ? null : (
+                <TooltipRow key={s.key} color={s.color} label={s.label} value={fmtV(v, s)} />
+              );
             })}
           </TooltipBox>
         )}

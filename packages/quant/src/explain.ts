@@ -28,7 +28,12 @@ export function money(x: number | null | undefined, currency: Currency = 'USD', 
   if (x === null || x === undefined || !Number.isFinite(x)) return '—';
   const locale = currency === 'INR' ? 'en-IN' : 'en-US';
   const d = digits ?? (Math.abs(x) >= 1000 ? 0 : 2);
-  return new Intl.NumberFormat(locale, { style: 'currency', currency, minimumFractionDigits: d, maximumFractionDigits: d }).format(x);
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: d,
+    maximumFractionDigits: d,
+  }).format(x);
 }
 
 /** Compact money: $1.2M / ₹1.25 Cr / ₹12.4 L. Indian investors think in lakhs & crores. */
@@ -61,7 +66,8 @@ export interface Explanation {
 }
 
 export function explainVolatility(vol: number): Explanation {
-  const level: Level = vol < 0.05 ? 'very-low' : vol < 0.1 ? 'low' : vol < 0.18 ? 'moderate' : vol < 0.3 ? 'high' : 'very-high';
+  const level: Level =
+    vol < 0.05 ? 'very-low' : vol < 0.1 ? 'low' : vol < 0.18 ? 'moderate' : vol < 0.3 ? 'high' : 'very-high';
   const feel = {
     'very-low': 'barely moves — closer to a savings account than the stock market',
     low: 'a gentle ride, typical of bond-heavy portfolios',
@@ -76,7 +82,16 @@ export function explainVolatility(vol: number): Explanation {
 }
 
 export function explainSharpe(sharpe: number): Explanation {
-  const level: Level = sharpe < 0 ? 'very-low' : sharpe < 0.4 ? 'low' : sharpe < 0.8 ? 'moderate' : sharpe < 1.4 ? 'high' : 'very-high';
+  const level: Level =
+    sharpe < 0
+      ? 'very-low'
+      : sharpe < 0.4
+        ? 'low'
+        : sharpe < 0.8
+          ? 'moderate'
+          : sharpe < 1.4
+            ? 'high'
+            : 'very-high';
   const text = {
     'very-low': 'It earned less than cash — the risk taken was not rewarded at all.',
     low: 'Weak reward for the risk taken; safer options earned nearly as much.',
@@ -88,21 +103,40 @@ export function explainSharpe(sharpe: number): Explanation {
 }
 
 export function explainDrawdown(dd: number, amount?: number, currency: Currency = 'USD'): Explanation {
-  const level: Level = dd < 0.05 ? 'very-low' : dd < 0.15 ? 'low' : dd < 0.3 ? 'moderate' : dd < 0.5 ? 'high' : 'very-high';
-  const example = amount ? ` — ${money(amount, currency, 0)} would have shrunk to ${money(amount * (1 - dd), currency, 0)}` : '';
-  return { level, text: `At its worst it fell ${pct(dd, 0)} from a previous high${example}. That is the pain you must be ready to sit through.` };
+  const level: Level =
+    dd < 0.05 ? 'very-low' : dd < 0.15 ? 'low' : dd < 0.3 ? 'moderate' : dd < 0.5 ? 'high' : 'very-high';
+  const example = amount
+    ? ` — ${money(amount, currency, 0)} would have shrunk to ${money(amount * (1 - dd), currency, 0)}`
+    : '';
+  return {
+    level,
+    text: `At its worst it fell ${pct(dd, 0)} from a previous high${example}. That is the pain you must be ready to sit through.`,
+  };
 }
 
 export function explainVaR(var1d: number, amount: number, currency: Currency): Explanation {
-  return { text: `On a bad day (1 day in 20) expect to lose at least ${pct(var1d, 1)} — about ${money(amount * var1d, currency, 0)} on ${money(amount, currency, 0)}.` };
+  return {
+    text: `On a bad day (1 day in 20) expect to lose at least ${pct(var1d, 1)} — about ${money(amount * var1d, currency, 0)} on ${money(amount, currency, 0)}.`,
+  };
 }
 
 export function explainCVaR(cvar1d: number, amount: number, currency: Currency): Explanation {
-  return { text: `When those bad days happen, the average loss is ${pct(cvar1d, 1)} (≈ ${money(amount * cvar1d, currency, 0)}). This "expected shortfall" captures how bad the bad days really are.` };
+  return {
+    text: `When those bad days happen, the average loss is ${pct(cvar1d, 1)} (≈ ${money(amount * cvar1d, currency, 0)}). This "expected shortfall" captures how bad the bad days really are.`,
+  };
 }
 
 export function explainBeta(beta: number, benchmark = 'the market'): Explanation {
-  const level: Level = beta < 0.3 ? 'very-low' : beta < 0.8 ? 'low' : beta < 1.15 ? 'moderate' : beta < 1.6 ? 'high' : 'very-high';
+  const level: Level =
+    beta < 0.3
+      ? 'very-low'
+      : beta < 0.8
+        ? 'low'
+        : beta < 1.15
+          ? 'moderate'
+          : beta < 1.6
+            ? 'high'
+            : 'very-high';
   const text =
     beta < 0
       ? `Tends to move opposite to ${benchmark} — a natural hedge.`
@@ -110,15 +144,23 @@ export function explainBeta(beta: number, benchmark = 'the market'): Explanation
   return { level, text };
 }
 
-export function explainCagr(cagr: number, years: number, amount = 10_000, currency: Currency = 'USD'): Explanation {
+export function explainCagr(
+  cagr: number,
+  years: number,
+  amount = 10_000,
+  currency: Currency = 'USD',
+): Explanation {
   const end = amount * Math.pow(1 + cagr, years);
   const ago = years < 1.5 ? 'a year' : `${number(years, 0)} years`;
   const verb = cagr >= 0 ? 'Grew' : 'Shrank';
-  return { text: `${verb} ${pct(Math.abs(cagr))} a year on average — ${money(amount, currency, 0)} invested ${ago} ago would be about ${money(end, currency, 0)} today.` };
+  return {
+    text: `${verb} ${pct(Math.abs(cagr))} a year on average — ${money(amount, currency, 0)} invested ${ago} ago would be about ${money(end, currency, 0)} today.`,
+  };
 }
 
 export function explainCorrelation(rho: number): Explanation {
-  const level: Level = rho < 0 ? 'very-low' : rho < 0.3 ? 'low' : rho < 0.6 ? 'moderate' : rho < 0.85 ? 'high' : 'very-high';
+  const level: Level =
+    rho < 0 ? 'very-low' : rho < 0.3 ? 'low' : rho < 0.6 ? 'moderate' : rho < 0.85 ? 'high' : 'very-high';
   const text = {
     'very-low': 'They tend to move in opposite directions — excellent for diversification.',
     low: 'They mostly move independently — good diversification.',
@@ -130,7 +172,8 @@ export function explainCorrelation(rho: number): Explanation {
 }
 
 export function explainDiversification(enb: number, holdings: number): Explanation {
-  const level: Level = enb < 1.5 ? 'very-low' : enb < 2.5 ? 'low' : enb < 4 ? 'moderate' : enb < 6 ? 'high' : 'very-high';
+  const level: Level =
+    enb < 1.5 ? 'very-low' : enb < 2.5 ? 'low' : enb < 4 ? 'moderate' : enb < 6 ? 'high' : 'very-high';
   return {
     level,
     text:
@@ -141,8 +184,10 @@ export function explainDiversification(enb: number, holdings: number): Explanati
 }
 
 export function explainRiskVsMoney(name: string, weight: number, riskShare: number): string | null {
-  if (riskShare > weight * 1.4 && riskShare > 0.15) return `${name} is ${pct(weight, 0)} of your money but ${pct(riskShare, 0)} of your risk.`;
-  if (riskShare < weight * 0.6 && weight > 0.1) return `${name} is ${pct(weight, 0)} of your money but only ${pct(riskShare, 0)} of your risk — a stabiliser.`;
+  if (riskShare > weight * 1.4 && riskShare > 0.15)
+    return `${name} is ${pct(weight, 0)} of your money but ${pct(riskShare, 0)} of your risk.`;
+  if (riskShare < weight * 0.6 && weight > 0.1)
+    return `${name} is ${pct(weight, 0)} of your money but only ${pct(riskShare, 0)} of your risk — a stabiliser.`;
   return null;
 }
 
@@ -164,17 +209,25 @@ export function explainWeightChanges(changes: WeightChange[], threshold = 0.03):
     if (Math.abs(d) < threshold) continue;
     let why = '';
     if (d > 0) {
-      if (c.avgCorr !== undefined && c.avgCorr < 0.3) why = 'it moves differently from your other holdings, so it smooths the ride';
-      else if (c.sharpe !== undefined && c.sharpe > 0.8) why = 'it has delivered strong returns for its level of risk';
+      if (c.avgCorr !== undefined && c.avgCorr < 0.3)
+        why = 'it moves differently from your other holdings, so it smooths the ride';
+      else if (c.sharpe !== undefined && c.sharpe > 0.8)
+        why = 'it has delivered strong returns for its level of risk';
       else if (c.vol !== undefined && c.vol < 0.1) why = 'it is low-risk and steadies the portfolio';
       else why = 'it improves the overall return-to-risk balance';
-      out.push(`${c.from < 0.005 ? 'Add' : 'Increase'} ${c.name} (${pct(c.from, 0)} → ${pct(c.to, 0)}): ${why}.`);
+      out.push(
+        `${c.from < 0.005 ? 'Add' : 'Increase'} ${c.name} (${pct(c.from, 0)} → ${pct(c.to, 0)}): ${why}.`,
+      );
     } else {
       if (c.vol !== undefined && c.vol > 0.35) why = 'it is very volatile and adds more risk than return';
-      else if (c.avgCorr !== undefined && c.avgCorr > 0.7) why = 'it largely duplicates what your other holdings already do';
-      else if (c.sharpe !== undefined && c.sharpe < 0.3) why = 'it has not paid enough for the risk it carries';
+      else if (c.avgCorr !== undefined && c.avgCorr > 0.7)
+        why = 'it largely duplicates what your other holdings already do';
+      else if (c.sharpe !== undefined && c.sharpe < 0.3)
+        why = 'it has not paid enough for the risk it carries';
       else why = 'its risk is better spent elsewhere';
-      out.push(`${c.to < 0.005 ? 'Remove' : 'Reduce'} ${c.name} (${pct(c.from, 0)} → ${pct(c.to, 0)}): ${why}.`);
+      out.push(
+        `${c.to < 0.005 ? 'Remove' : 'Reduce'} ${c.name} (${pct(c.from, 0)} → ${pct(c.to, 0)}): ${why}.`,
+      );
     }
   }
   return out;
@@ -187,7 +240,10 @@ export function explainRegime(regime: 'calm' | 'turbulent', probability: number,
     : `${market} is ${sure} in a turbulent regime (${pct(probability, 0)} confidence): expect large daily swings. Historically a bad time to panic-sell and a good time to rebalance.`;
 }
 
-export function moodLabel(score: number): { label: string; key: 'extreme-fear' | 'fear' | 'neutral' | 'greed' | 'extreme-greed' } {
+export function moodLabel(score: number): {
+  label: string;
+  key: 'extreme-fear' | 'fear' | 'neutral' | 'greed' | 'extreme-greed';
+} {
   if (score < 20) return { label: 'Extreme fear', key: 'extreme-fear' };
   if (score < 40) return { label: 'Fear', key: 'fear' };
   if (score <= 60) return { label: 'Neutral', key: 'neutral' };
@@ -197,10 +253,13 @@ export function moodLabel(score: number): { label: string; key: 'extreme-fear' |
 
 export function explainMood(score: number, market: string): string {
   const { label } = moodLabel(score);
-  if (score < 25) return `${market} sentiment: ${label.toLowerCase()}. Investors are scared — historically, long-term buyers have been rewarded for staying the course in moments like this.`;
-  if (score < 45) return `${market} sentiment: ${label.toLowerCase()}. Caution is elevated; volatility is above normal.`;
+  if (score < 25)
+    return `${market} sentiment: ${label.toLowerCase()}. Investors are scared — historically, long-term buyers have been rewarded for staying the course in moments like this.`;
+  if (score < 45)
+    return `${market} sentiment: ${label.toLowerCase()}. Caution is elevated; volatility is above normal.`;
   if (score <= 60) return `${market} sentiment: ${label.toLowerCase()}. No strong emotion either way.`;
-  if (score <= 80) return `${market} sentiment: ${label.toLowerCase()}. Prices are rising with confidence — a good moment to check your portfolio hasn't drifted too far into stocks.`;
+  if (score <= 80)
+    return `${market} sentiment: ${label.toLowerCase()}. Prices are rising with confidence — a good moment to check your portfolio hasn't drifted too far into stocks.`;
   return `${market} sentiment: ${label.toLowerCase()}. Optimism is running hot; this is when rebalancing discipline matters most.`;
 }
 
@@ -210,8 +269,17 @@ export function odds(p: number): string {
   if (p >= 0.985) return 'almost certainly';
   if (p <= 0.015) return 'almost never';
   const pairs: [number, string][] = [
-    [0.05, '1 in 20'], [0.1, '1 in 10'], [0.2, '1 in 5'], [0.25, '1 in 4'], [0.33, '1 in 3'], [0.5, '1 in 2'],
-    [0.67, '2 in 3'], [0.75, '3 in 4'], [0.8, '4 in 5'], [0.9, '9 in 10'], [0.95, '19 in 20'],
+    [0.05, '1 in 20'],
+    [0.1, '1 in 10'],
+    [0.2, '1 in 5'],
+    [0.25, '1 in 4'],
+    [0.33, '1 in 3'],
+    [0.5, '1 in 2'],
+    [0.67, '2 in 3'],
+    [0.75, '3 in 4'],
+    [0.8, '4 in 5'],
+    [0.9, '9 in 10'],
+    [0.95, '19 in 20'],
   ];
   let best = pairs[0];
   for (const pr of pairs) if (Math.abs(pr[0] - p) < Math.abs(best[0] - p)) best = pr;

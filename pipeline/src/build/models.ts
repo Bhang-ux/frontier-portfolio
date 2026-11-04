@@ -45,7 +45,8 @@ interface Sleeves {
 const MARKETS: Record<'US' | 'IN', Sleeves> = {
   US: {
     equity: (p) => (p >= 4 ? ['SPY', 'QQQ', 'VEA', 'VWO'] : ['SPY', 'VEA', 'VWO']),
-    defensive: (p) => (p <= 2 ? ['AGG', 'IEF', 'SHY', 'TIP'] : p === 3 ? ['AGG', 'IEF', 'TIP'] : ['AGG', 'IEF']),
+    defensive: (p) =>
+      p <= 2 ? ['AGG', 'IEF', 'SHY', 'TIP'] : p === 3 ? ['AGG', 'IEF', 'TIP'] : ['AGG', 'IEF'],
     gold: 'GLD',
     currency: 'USD',
   },
@@ -64,7 +65,11 @@ function ercWeights(ids: string[], universe: Universe, end: number): Map<string,
   // so a cash instrument receives a fixed half of a mixed sleeve instead.
   const cash = ids.filter((id) => universe.get(id)!.meta.kind === 'cash');
   if (cash.length && cash.length < ids.length) {
-    const rest = ercWeights(ids.filter((id) => !cash.includes(id)), universe, end);
+    const rest = ercWeights(
+      ids.filter((id) => !cash.includes(id)),
+      universe,
+      end,
+    );
     const out = new Map<string, number>();
     rest.forEach((w, id) => out.set(id, w * 0.5));
     cash.forEach((id) => out.set(id, 0.5 / cash.length));
@@ -83,7 +88,10 @@ function ercWeights(ids: string[], universe: Universe, end: number): Map<string,
   return out;
 }
 
-export function buildModels(universe: Universe, riskFree: Record<'USD' | 'INR', number>): { models: ModelPortfolio[]; skipped: string[] } {
+export function buildModels(
+  universe: Universe,
+  riskFree: Record<'USD' | 'INR', number>,
+): { models: ModelPortfolio[]; skipped: string[] } {
   const models: ModelPortfolio[] = [];
   const skipped: string[] = [];
   for (const [market, sl] of Object.entries(MARKETS) as ['US' | 'IN', Sleeves][]) {
@@ -123,7 +131,14 @@ export function buildModels(universe: Universe, riskFree: Record<'USD' | 'INR', 
 
       // backtest on the common window
       const al = alignSeries(ids.map((id) => universe.get(id)!.series));
-      const bt = backtest({ dates: al.dates, prices: al.values, weights: rounded, rebalance: 'monthly', costBps: 5, riskFree: riskFree[sl.currency] });
+      const bt = backtest({
+        dates: al.dates,
+        prices: al.values,
+        weights: rounded,
+        rebalance: 'monthly',
+        costBps: 5,
+        riskFree: riskFree[sl.currency],
+      });
       const wk = returnsMatrix(resampleAligned(al, 'W').values);
       const cov = estimateCovariance(wk.slice(-260), 52, 'ledoit-wolf').cov;
       const rc = riskContributions(rounded, cov).percent;
@@ -163,11 +178,11 @@ export function buildModels(universe: Universe, riskFree: Record<'USD' | 'INR', 
           bestYear: best ? { year: best.year, ret: best.ret } : null,
         },
         forward: { mu, sigma },
-        method: 'Strategic allocation by risk profile; equal risk contribution within each sleeve (Ledoit–Wolf covariance, 5y weekly); monthly rebalancing.',
+        method:
+          'Strategic allocation by risk profile; equal risk contribution within each sleeve (Ledoit–Wolf covariance, 5y weekly); monthly rebalancing.',
         summary: `${pr.name}: about ${Math.round(pr.equity * 100)}% in growth assets and ${Math.round((1 - pr.equity) * 100)}% in stabilisers. Over the last ${explain.number(years, 0)} years this mix grew ${explain.pct(bt.metrics.cagr)} a year, with a worst fall of ${explain.pct(bt.metrics.maxDrawdown, 0)}${worst ? ` and a worst calendar year of ${explain.signedPct(worst.ret)} (${worst.year})` : ''}.`,
       });
     }
   }
   return { models, skipped };
 }
-

@@ -142,7 +142,11 @@ export function technicals(prices: ArrayLike<number>, ppy = 252): Technicals | n
   const aboveSma50 = last > sma50v;
   const goldenCross = sma50v > sma200v;
   const trend: Technicals['trend'] =
-    aboveSma200 && goldenCross && aboveSma50 ? 'up' : !aboveSma200 && !goldenCross && !aboveSma50 ? 'down' : 'sideways';
+    aboveSma200 && goldenCross && aboveSma50
+      ? 'up'
+      : !aboveSma200 && !goldenCross && !aboveSma50
+        ? 'down'
+        : 'sideways';
   return {
     price: last,
     sma50: sma50v,
@@ -197,36 +201,104 @@ export function compositeSignal(
   const reasons: SignalReason[] = [];
   const trendPts = (t.aboveSma200 ? 1 : 0) + (t.goldenCross ? 1 : 0) + (t.aboveSma50 ? 1 : 0);
   const trend = trendPts / 3;
-  if (t.trend === 'up') reasons.push({ key: 'trend-up', tone: 'positive', text: 'Price is above its 50- and 200-day averages — a healthy uptrend.' });
-  else if (t.trend === 'down') reasons.push({ key: 'trend-down', tone: 'negative', text: 'Price is below its 50- and 200-day averages — a downtrend.' });
-  else if (t.aboveSma200) reasons.push({ key: 'trend-mixed-up', tone: 'neutral', text: 'Long-term trend is up, but the short-term trend has weakened.' });
-  else reasons.push({ key: 'trend-mixed-down', tone: 'neutral', text: 'Below its 200-day average, though showing some short-term strength.' });
+  if (t.trend === 'up')
+    reasons.push({
+      key: 'trend-up',
+      tone: 'positive',
+      text: 'Price is above its 50- and 200-day averages — a healthy uptrend.',
+    });
+  else if (t.trend === 'down')
+    reasons.push({
+      key: 'trend-down',
+      tone: 'negative',
+      text: 'Price is below its 50- and 200-day averages — a downtrend.',
+    });
+  else if (t.aboveSma200)
+    reasons.push({
+      key: 'trend-mixed-up',
+      tone: 'neutral',
+      text: 'Long-term trend is up, but the short-term trend has weakened.',
+    });
+  else
+    reasons.push({
+      key: 'trend-mixed-down',
+      tone: 'neutral',
+      text: 'Below its 200-day average, though showing some short-term strength.',
+    });
 
   const momentum = ranks.momentum ?? 0.5;
   if (ranks.momentum !== null) {
-    if (momentum >= 0.75) reasons.push({ key: 'mom-high', tone: 'positive', text: `Stronger 12-month momentum than ${Math.round(momentum * 100)}% of similar assets.` });
-    else if (momentum <= 0.25) reasons.push({ key: 'mom-low', tone: 'negative', text: `Weaker 12-month momentum than ${Math.round((1 - momentum) * 100)}% of similar assets.` });
+    if (momentum >= 0.75)
+      reasons.push({
+        key: 'mom-high',
+        tone: 'positive',
+        text: `Stronger 12-month momentum than ${Math.round(momentum * 100)}% of similar assets.`,
+      });
+    else if (momentum <= 0.25)
+      reasons.push({
+        key: 'mom-low',
+        tone: 'negative',
+        text: `Weaker 12-month momentum than ${Math.round((1 - momentum) * 100)}% of similar assets.`,
+      });
   }
   const quality = ranks.sharpe ?? 0.5;
   if (ranks.sharpe !== null) {
-    if (quality >= 0.75) reasons.push({ key: 'sharpe-high', tone: 'positive', text: 'Among the best risk-adjusted returns in its group over the past year.' });
-    else if (quality <= 0.25) reasons.push({ key: 'sharpe-low', tone: 'negative', text: 'Poor risk-adjusted returns over the past year.' });
+    if (quality >= 0.75)
+      reasons.push({
+        key: 'sharpe-high',
+        tone: 'positive',
+        text: 'Among the best risk-adjusted returns in its group over the past year.',
+      });
+    else if (quality <= 0.25)
+      reasons.push({
+        key: 'sharpe-low',
+        tone: 'negative',
+        text: 'Poor risk-adjusted returns over the past year.',
+      });
   }
   let stretch = 1;
   if (Number.isFinite(t.rsi14)) {
     if (t.rsi14 > 75) {
       stretch = 0.2;
-      reasons.push({ key: 'rsi-hot', tone: 'neutral', text: `RSI is ${t.rsi14.toFixed(0)} — overheated in the short term; pullbacks are common from here.` });
+      reasons.push({
+        key: 'rsi-hot',
+        tone: 'neutral',
+        text: `RSI is ${t.rsi14.toFixed(0)} — overheated in the short term; pullbacks are common from here.`,
+      });
     } else if (t.rsi14 < 25) {
       stretch = 0.4;
-      reasons.push({ key: 'rsi-cold', tone: 'neutral', text: `RSI is ${t.rsi14.toFixed(0)} — heavily sold off in the short term.` });
+      reasons.push({
+        key: 'rsi-cold',
+        tone: 'neutral',
+        text: `RSI is ${t.rsi14.toFixed(0)} — heavily sold off in the short term.`,
+      });
     } else if (t.rsi14 > 65 || t.rsi14 < 35) stretch = 0.7;
   }
-  if (t.volRatio > 1.5) reasons.push({ key: 'vol-spike', tone: 'negative', text: 'Volatility has jumped well above its 1-year norm.' });
-  if (t.fromHigh52 < -0.3) reasons.push({ key: 'deep-dd', tone: 'negative', text: `Trading ${Math.round(-t.fromHigh52 * 100)}% below its 52-week high.` });
-  else if (t.fromHigh52 > -0.02) reasons.push({ key: 'near-high', tone: 'positive', text: 'Trading at or near its 52-week high.' });
+  if (t.volRatio > 1.5)
+    reasons.push({
+      key: 'vol-spike',
+      tone: 'negative',
+      text: 'Volatility has jumped well above its 1-year norm.',
+    });
+  if (t.fromHigh52 < -0.3)
+    reasons.push({
+      key: 'deep-dd',
+      tone: 'negative',
+      text: `Trading ${Math.round(-t.fromHigh52 * 100)}% below its 52-week high.`,
+    });
+  else if (t.fromHigh52 > -0.02)
+    reasons.push({ key: 'near-high', tone: 'positive', text: 'Trading at or near its 52-week high.' });
 
   const score = Math.round(100 * (0.4 * trend + 0.3 * momentum + 0.2 * quality + 0.1 * stretch));
-  const label: SignalLabel = score >= 75 ? 'strong' : score >= 60 ? 'positive' : score >= 40 ? 'neutral' : score >= 25 ? 'negative' : 'weak';
+  const label: SignalLabel =
+    score >= 75
+      ? 'strong'
+      : score >= 60
+        ? 'positive'
+        : score >= 40
+          ? 'neutral'
+          : score >= 25
+            ? 'negative'
+            : 'weak';
   return { score, label, components: { trend, momentum, quality, stretch }, reasons };
 }

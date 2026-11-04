@@ -28,7 +28,8 @@ export function riskContributions(w: Vector, cov: Matrix): RiskDecomposition {
   return { volatility: vol, marginal, component, percent };
 }
 
-export const portfolioVolatility = (w: Vector, cov: Matrix): number => Math.sqrt(Math.max(quadForm(w, cov), 0));
+export const portfolioVolatility = (w: Vector, cov: Matrix): number =>
+  Math.sqrt(Math.max(quadForm(w, cov), 0));
 export const portfolioReturn = (w: Vector, mu: Vector): number => w.reduce((s, wi, i) => s + wi * mu[i], 0);
 
 /** Diversification ratio (Choueifaty & Coignard 2008): Σwᵢσᵢ / σₚ ≥ 1. */

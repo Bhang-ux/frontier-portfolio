@@ -30,7 +30,12 @@ export interface Acquired {
   riskFree: Record<Currency, { rate: number; source: string; asOf: string }>;
 }
 
-const quoteFromSeries = (dates: number[], close: number[], livePrice?: number | null, liveTime?: number | null): Quote => {
+const quoteFromSeries = (
+  dates: number[],
+  close: number[],
+  livePrice?: number | null,
+  liveTime?: number | null,
+): Quote => {
   const n = close.length;
   const price = livePrice && Number.isFinite(livePrice) ? livePrice : close[n - 1];
   const previousClose = n >= 2 ? close[n - 2] : close[n - 1];
@@ -83,7 +88,13 @@ export async function acquire(o: AcquireOptions): Promise<Acquired> {
     for (const meta of UNIVERSE) {
       const s = synth.get(meta.id);
       if (!s || s.dates.length < 2) continue;
-      universe.set(meta.id, { meta, series: s, close: s.values.slice(), quote: quoteFromSeries(s.dates, s.values), source: 'synthetic' });
+      universe.set(meta.id, {
+        meta,
+        series: s,
+        close: s.values.slice(),
+        quote: quoteFromSeries(s.dates, s.values),
+        source: 'synthetic',
+      });
       bump('synthetic');
     }
   } else {
@@ -112,7 +123,13 @@ export async function acquire(o: AcquireOptions): Promise<Acquired> {
             if (o.siteUrl) {
               try {
                 const prev = await fetchPreviousHistory(o.siteUrl, meta.id);
-                universe.set(meta.id, { meta, series: prev, close: prev.values.slice(), quote: quoteFromSeries(prev.dates, prev.values), source: 'previous-deploy' });
+                universe.set(meta.id, {
+                  meta,
+                  series: prev,
+                  close: prev.values.slice(),
+                  quote: quoteFromSeries(prev.dates, prev.values),
+                  source: 'previous-deploy',
+                });
                 bump('previous-deploy');
                 o.log(`  ↺ ${meta.id}: ${reason} — reused previous deploy`);
                 return;
@@ -135,20 +152,33 @@ export async function acquire(o: AcquireOptions): Promise<Acquired> {
     INR: { rate: 0.065, source: 'assumption (6.5%)', asOf: o.now.toISOString() },
   };
   let usdRate: Series | null = universe.get('IRX')?.series ?? null;
-  if (usdRate) riskFree.USD = { rate: usdRate.values.at(-1)! / 100, source: 'US 13-week T-bill (^IRX)', asOf: `${fromEpochDay(usdRate.dates.at(-1)!)}` };
+  if (usdRate)
+    riskFree.USD = {
+      rate: usdRate.values.at(-1)! / 100,
+      source: 'US 13-week T-bill (^IRX)',
+      asOf: `${fromEpochDay(usdRate.dates.at(-1)!)}`,
+    };
   let inrRate: Series | null = null;
   if (!o.synthetic) {
     if (!usdRate) {
       try {
         usdRate = await fetchFredSeries('DTB3', o.start);
-        riskFree.USD = { rate: usdRate.values.at(-1)! / 100, source: 'FRED DTB3 (3-month T-bill)', asOf: fromEpochDay(usdRate.dates.at(-1)!) };
+        riskFree.USD = {
+          rate: usdRate.values.at(-1)! / 100,
+          source: 'FRED DTB3 (3-month T-bill)',
+          asOf: fromEpochDay(usdRate.dates.at(-1)!),
+        };
       } catch (e) {
         o.log(`  ✗ FRED DTB3: ${(e as Error).message}`);
       }
     }
     try {
       inrRate = await fetchFredSeries('IR3TIB01INM156N', o.start);
-      riskFree.INR = { rate: inrRate.values.at(-1)! / 100, source: 'FRED/OECD India 3-month interbank rate', asOf: fromEpochDay(inrRate.dates.at(-1)!) };
+      riskFree.INR = {
+        rate: inrRate.values.at(-1)! / 100,
+        source: 'FRED/OECD India 3-month interbank rate',
+        asOf: fromEpochDay(inrRate.dates.at(-1)!),
+      };
     } catch (e) {
       o.log(`  ✗ FRED India rate: ${(e as Error).message} — using assumption`);
     }
@@ -163,7 +193,13 @@ export async function acquire(o: AcquireOptions): Promise<Acquired> {
   };
   for (const meta of CASH_ASSETS as AssetMeta[]) {
     const s = cashSeries[meta.id];
-    universe.set(meta.id, { meta, series: s, close: s.values.slice(), quote: quoteFromSeries(s.dates, s.values), source: 'constructed' });
+    universe.set(meta.id, {
+      meta,
+      series: s,
+      close: s.values.slice(),
+      quote: quoteFromSeries(s.dates, s.values),
+      source: 'constructed',
+    });
     bump('constructed');
   }
 
@@ -178,7 +214,13 @@ export async function acquire(o: AcquireOptions): Promise<Acquired> {
           if (!meta) return;
           try {
             const b = await fetchIntraday(meta.symbol);
-            if (b.t.length > 2) intraday[id] = { t: b.t, p: b.p.map((v) => Number(v.toPrecision(7))), previousClose: b.previousClose, currency: meta.currency };
+            if (b.t.length > 2)
+              intraday[id] = {
+                t: b.t,
+                p: b.p.map((v) => Number(v.toPrecision(7))),
+                previousClose: b.previousClose,
+                currency: meta.currency,
+              };
           } catch (e) {
             o.log(`  ✗ intraday ${id}: ${(e as Error).message}`);
           }
