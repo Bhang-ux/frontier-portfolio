@@ -1,0 +1,98 @@
+# Quality gates for every push and pull request. Nothing here touches the
+# network for market data: builds and E2E tests use the synthetic dataset.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore: ['**.md', 'docs/**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck · lint · format · unit & golden tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - name: Unit, golden & pipeline tests (with coverage)
+        run: npx vitest run --coverage
+      - name: Coverage summary
+        if: always()
+        run: |
+          node -e "const s=require('./coverage/coverage-summary.json').total; const row=k=>'| '+k+' | '+s[k].pct+'% |'; console.log(['### Test coverage','| Metric | % |','|---|---|',row('lines'),row('statements'),row('functions'),row('branches')].join('\n'))" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: coverage
+          path: coverage
+          retention-days: 7
+
+  reference:
+    name: Re-derive golden fixtures in Python & re-verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: tools/reference/requirements.txt
+      - run: pip install -r tools/reference/requirements.txt
+      - name: Regenerate fixtures with scikit-learn / PyPortfolioOpt / CVXPY
+        run: python tools/reference/generate_fixtures.py
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: TypeScript engine must match the fresh references
+        run: npx vitest run --project quant test/golden.test.ts
+
+  e2e:
+    name: Production build & Playwright E2E
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Generate synthetic dataset (offline, flagged as demo data)
+        run: npm run data:synthetic
+      - name: Build
+        run: npm run build
+      - name: Bundle size report
+        run: |
+          echo '### Bundle' >> "$GITHUB_STEP_SUMMARY"
+          echo '| File | Size (gzip) |' >> "$GITHUB_STEP_SUMMARY"
+          echo '|---|---|' >> "$GITHUB_STEP_SUMMARY"
+          for f in web/dist/assets/*.js; do echo "| $(basename "$f") | $(gzip -c "$f" | wc -c | awk '{printf "%.1f KB", $1/1024}') |"; done | sort -t'|' -k3 -r | head -12 >> "$GITHUB_STEP_SUMMARY"
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

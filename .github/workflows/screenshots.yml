@@ -1,0 +1,47 @@
+# Keeps the README screenshots honest: rebuilds the site with *live* data,
+# captures key pages with Playwright and commits them if they changed.
+# Pushes made with GITHUB_TOKEN never trigger other workflows, so no loops.
+name: README screenshots
+
+on:
+  schedule:
+    - cron: '23 3 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Live data
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"; repo="${GITHUB_REPOSITORY#*/}"
+          SITE_URL="https://${owner}.github.io/${repo}" npm run data
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Capture
+        run: |
+          npm run preview -w web > /tmp/preview.log 2>&1 &
+          for i in $(seq 1 30); do curl -fs http://localhost:4173/frontier-portfolio/ > /dev/null && break; sleep 2; done
+          node tools/screenshots.mjs docs/screenshots
+      - name: Commit if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/screenshots
+          if git diff --cached --quiet; then echo 'No visual changes.'; exit 0; fi
+          git commit -m 'docs: refresh README screenshots from live data [skip ci]'
+          git push

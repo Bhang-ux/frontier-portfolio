@@ -1,0 +1,105 @@
+# The autonomous heartbeat of Frontier.
+#
+#   schedule ─► fetch live market data ─► analyse ─► validate ─► build ─► deploy to Pages ─► smoke-test live site
+#
+# Runs hourly on weekdays (both Indian and US sessions) and every 4 hours on
+# weekends (crypto trades 24/7). If any upstream source fails, the pipeline
+# falls back to the previously deployed copy of that instrument; if the
+# validation gate fails, nothing is deployed and the last good site stays live.
+name: Data refresh & deploy
+
+on:
+  schedule:
+    - cron: '17 * * * 1-5'
+    - cron: '47 */4 * * 0,6'
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Fetch data & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      generated_at: ${{ steps.data.outputs.generated_at }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Resolve site URL
+        id: site
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          echo "url=https://${owner}.github.io/${repo}" >> "$GITHUB_OUTPUT"
+          echo "base=/${repo}/" >> "$GITHUB_OUTPUT"
+      - name: Refresh market data
+        id: data
+        env:
+          SITE_URL: ${{ steps.site.outputs.url }}
+        run: |
+          export NEXT_REFRESH="$(date -u -d '+1 hour' +%Y-%m-%dT%H:17:00Z)"
+          npm run data   # SITE_URL enables the previous-deploy fallback per instrument
+          echo "generated_at=$(node -p "require('./web/public/data/manifest.json').generatedAt")" >> "$GITHUB_OUTPUT"
+      - name: Build site
+        env:
+          BASE_PATH: ${{ steps.site.outputs.base }}
+        run: npm run build
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: web/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
+
+  smoke:
+    name: Smoke-test the live site
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Live manifest is the one we just built
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+          EXPECTED: ${{ needs.build.outputs.generated_at }}
+        run: |
+          set -euo pipefail
+          url="${PAGE_URL%/}"
+          for i in $(seq 1 18); do
+            got=$(curl -fsS -H 'Cache-Control: no-cache' "$url/data/manifest.json?nocache=$RANDOM" | python3 -c "import json,sys; print(json.load(sys.stdin)['generatedAt'])" || true)
+            if [ "$got" = "$EXPECTED" ]; then echo "✓ live manifest $got"; break; fi
+            echo "waiting for CDN ($got != $EXPECTED)…"; sleep 10
+          done
+          [ "$got" = "$EXPECTED" ] || { echo "::warning::CDN still serving an older manifest after 3 minutes"; }
+          for path in "" "optimize/" "portfolio/" "asset/SPY/" "data/snapshot.json"; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$url/$path")
+            echo "$code  /$path"
+            [ "$code" = "200" ] || { echo "::error::/$path returned $code"; exit 1; }
+          done
+          echo "### Live site" >> "$GITHUB_STEP_SUMMARY"
+          echo "[$url]($url) — data generated $EXPECTED" >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,26 @@
+# GitHub disables scheduled workflows in public repositories after 60 days
+# without repository activity. Re-enabling them through the API resets that
+# clock, so the data refresh keeps running indefinitely without dummy commits.
+name: Maintenance
+
+on:
+  schedule:
+    - cron: '41 4 */7 * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Keep scheduled workflows enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for wf in deploy.yml screenshots.yml maintenance.yml; do
+            gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/enable" && echo "✓ ${wf} enabled"
+          done
