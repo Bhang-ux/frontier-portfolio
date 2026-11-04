@@ -1,0 +1,11 @@
+import { defineProject } from 'vitest/config';
+import { fileURLToPath } from 'node:url';
+
+export default defineProject({
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
+  test: {
+    name: 'web',
+    include: ['src/**/*.test.ts'],
+    environment: 'node',
+  },
+});

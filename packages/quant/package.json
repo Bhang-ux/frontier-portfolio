@@ -1,0 +1,14 @@
+{
+  "name": "@frontier/quant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pure-TypeScript quantitative finance engine: risk, covariance estimation, optimization, simulation, regimes. Zero runtime dependencies; runs in Node, browsers and Web Workers.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  }
+}

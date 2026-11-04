@@ -1,0 +1,20 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Generated market data — produced by the pipeline in CI, never committed
+web/public/data/
+pipeline/.cache/
+
+# Test & tooling output
+playwright-report/
+test-results/
+e2e/.screenshots/
+tools/reference/.venv/
+__pycache__/
+*.tsbuildinfo

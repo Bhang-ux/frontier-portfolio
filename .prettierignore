@@ -1,0 +1,8 @@
+dist
+coverage
+node_modules
+web/public/data
+packages/quant/test/fixtures
+docs/*.pdf
+docs/interview-guide/out
+package-lock.json

@@ -1,0 +1,47 @@
+{
+  "name": "frontier-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontier — a quant-grade portfolio manager & optimizer that explains itself in plain English.",
+  "type": "module",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "pipeline",
+    "web"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "npm run dev -w web",
+    "build": "npm run build -w web",
+    "preview": "npm run preview -w web",
+    "data": "npm run start -w pipeline",
+    "data:synthetic": "npm run synthetic -w pipeline",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit -p packages/quant && tsc --noEmit -p pipeline && tsc --noEmit -p web",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "e2e": "playwright test",
+    "guide": "node docs/interview-guide/build.mjs",
+    "verify": "npm run typecheck && npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "1.63.0",
+    "@types/node": "^22.15.0",
+    "@vitest/coverage-v8": "3.2.7",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.0.0",
+    "prettier": "^3.6.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "3.2.7"
+  }
+}

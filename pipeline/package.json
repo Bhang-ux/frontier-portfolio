@@ -1,0 +1,19 @@
+{
+  "name": "@frontier/pipeline",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Stateless market-data ETL: fetch → clean → analyse → validate → publish static JSON for the web app.",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "synthetic": "tsx src/main.ts --synthetic",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@frontier/quant": "*",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0"
+  }
+}
