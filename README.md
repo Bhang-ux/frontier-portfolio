@@ -65,7 +65,7 @@ flowchart LR
   G -. WebSocket .-> L[Binance public stream<br/>live crypto]
 ```
 
-- **Stateless ETL, static API.** Each scheduled run rebuilds the entire dataset from source, so there is no database to corrupt or migrate. Output is JSON on the same CDN as the app; the browser polls a ~5 KB manifest and only downloads files whose content hash changed.
+- **Stateless ETL, static API.** Each scheduled run rebuilds the entire dataset from source, so there is no database to corrupt or migrate. Output is JSON on the same CDN as the app; the browser polls a ~9 KB manifest and only downloads files whose content hash changed.
 - **One quant engine, two runtimes.** `packages/quant` is pure TypeScript with zero runtime dependencies. The pipeline (Node) and the app (Web Worker) run _the same code_, so a number on the dashboard can never disagree with the analysis page.
 - **Your data stays yours.** Portfolios live in `localStorage`; sharing encodes a portfolio into the URL hash. No accounts, no tracking, no backend.
 - **Fails safe.** Upstream flake → previous copy of that instrument; schema/freshness failure → no deploy; site → still the last good build.

@@ -18,3 +18,6 @@ e2e/.screenshots/
 tools/reference/.venv/
 __pycache__/
 *.tsbuildinfo
+
+# Interview guide intermediate HTML
+docs/interview-guide/out/

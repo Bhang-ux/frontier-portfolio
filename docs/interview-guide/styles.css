@@ -1,0 +1,327 @@
+@font-face {
+  font-family: 'Inter';
+  src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2')
+    format('woff2-variations');
+  font-weight: 100 900;
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('../../node_modules/@fontsource-variable/inter/files/inter-latin-ext-wght-normal.woff2')
+    format('woff2-variations');
+  font-weight: 100 900;
+  unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2')
+    format('woff2-variations');
+  font-weight: 100 800;
+}
+
+:root {
+  --ink: #0f1320;
+  --ink-2: #3c4456;
+  --ink-3: #6a7285;
+  --line: #e3e6ee;
+  --soft: #f4f6fa;
+  --accent: #4f46e5;
+  --accent-2: #0d9488;
+  --warn: #b45309;
+  --good: #047857;
+  --bad: #b91c1c;
+}
+
+@page {
+  size: A4;
+  margin: 18mm 16mm 18mm 16mm;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10.2pt;
+  line-height: 1.55;
+  color: var(--ink);
+  font-feature-settings: 'cv11', 'ss01';
+}
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+h1.section {
+  font-size: 22pt;
+  margin: 0 0 4mm;
+  padding-top: 2mm;
+  page-break-before: always;
+  break-before: page;
+}
+h1.section .num {
+  color: var(--accent);
+  margin-right: 3mm;
+}
+h2 {
+  font-size: 13.5pt;
+  margin: 7mm 0 2.5mm;
+  break-after: avoid;
+}
+h3 {
+  font-size: 11pt;
+  margin: 5mm 0 1.5mm;
+  break-after: avoid;
+}
+p {
+  margin: 0 0 2.6mm;
+}
+ul,
+ol {
+  margin: 0 0 3mm;
+  padding-left: 5.5mm;
+}
+li {
+  margin: 0.8mm 0;
+}
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+code {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 8.6pt;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 1.2mm;
+}
+pre {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 8.1pt;
+  line-height: 1.5;
+  background: #0f1320;
+  color: #e6e9f2;
+  border-radius: 6px;
+  padding: 3.5mm 4mm;
+  margin: 2mm 0 4mm;
+  white-space: pre-wrap;
+  break-inside: avoid;
+}
+pre .c {
+  color: #8b93a7;
+}
+pre .k {
+  color: #c4b5fd;
+}
+pre .s {
+  color: #86efac;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2mm 0 4.5mm;
+  font-size: 8.9pt;
+  break-inside: auto;
+}
+th {
+  text-align: left;
+  background: var(--soft);
+  color: var(--ink-2);
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  padding: 1.8mm 2.2mm;
+}
+td {
+  border-bottom: 1px solid var(--line);
+  padding: 1.6mm 2.2mm;
+  vertical-align: top;
+}
+tr {
+  break-inside: avoid;
+}
+.lead {
+  font-size: 11.2pt;
+  color: var(--ink-2);
+}
+.muted {
+  color: var(--ink-3);
+}
+.small {
+  font-size: 8.8pt;
+}
+.box {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3.5mm 4.5mm;
+  margin: 3mm 0 4.5mm;
+  background: #fff;
+  break-inside: avoid;
+}
+.box.accent {
+  border-left: 3px solid var(--accent);
+  background: #f7f7ff;
+}
+.box.warn {
+  border-left: 3px solid var(--warn);
+  background: #fffaf2;
+}
+.box.good {
+  border-left: 3px solid var(--good);
+  background: #f3fbf7;
+}
+.box h4 {
+  margin: 0 0 1.5mm;
+  font-size: 10pt;
+}
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4mm;
+}
+.grid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 3.5mm;
+}
+.kpi {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3mm 3.5mm;
+  break-inside: avoid;
+}
+.kpi .v {
+  font-size: 15pt;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.kpi .l {
+  font-size: 8.4pt;
+  color: var(--ink-3);
+}
+figure {
+  margin: 3mm 0 5mm;
+  break-inside: avoid;
+}
+figcaption {
+  font-size: 8.6pt;
+  color: var(--ink-3);
+  margin-top: 1.5mm;
+  text-align: center;
+}
+svg text {
+  font-family: 'Inter', sans-serif;
+}
+
+/* cover */
+.cover {
+  height: 257mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  page-break-after: always;
+  break-after: page;
+}
+.cover .band {
+  border-radius: 10px;
+  padding: 16mm 12mm 13mm;
+  color: #fff;
+  background:
+    radial-gradient(120mm 80mm at 85% 0%, rgba(45, 212, 191, 0.45), transparent 60%),
+    radial-gradient(140mm 90mm at 0% 100%, rgba(217, 70, 239, 0.4), transparent 60%),
+    linear-gradient(135deg, #312e81 0%, #4f46e5 45%, #7c3aed 100%);
+}
+.cover h1 {
+  color: #fff;
+  font-size: 34pt;
+  margin: 6mm 0 3mm;
+  letter-spacing: -0.03em;
+}
+.cover .sub {
+  font-size: 13pt;
+  opacity: 0.92;
+  max-width: 150mm;
+}
+.cover .eyebrow {
+  font-size: 9pt;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.cover .meta {
+  font-size: 9.5pt;
+  color: var(--ink-2);
+}
+
+/* questions */
+.q {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4.5mm 5mm 3mm;
+  margin: 0 0 5mm;
+}
+.q .qh {
+  display: flex;
+  gap: 3mm;
+  align-items: baseline;
+  break-after: avoid;
+}
+.q .qn {
+  flex: 0 0 auto;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 5px;
+  padding: 0.6mm 2.2mm;
+  font-size: 9pt;
+}
+.q .qt {
+  font-weight: 650;
+  font-size: 11pt;
+  line-height: 1.35;
+}
+.q .probe {
+  margin: 2mm 0 3mm;
+  font-size: 8.9pt;
+  color: var(--ink-3);
+}
+.q .probe b {
+  color: var(--ink-2);
+}
+.q .follow {
+  margin-top: 2mm;
+  padding-top: 2mm;
+  border-top: 1px dashed var(--line);
+  font-size: 9pt;
+  color: var(--ink-2);
+}
+.toc a {
+  color: var(--ink);
+}
+.toc li {
+  margin: 1.4mm 0;
+}
+.toc .n {
+  color: var(--accent);
+  font-weight: 600;
+  display: inline-block;
+  width: 8mm;
+}
+.tag {
+  display: inline-block;
+  font-size: 7.6pt;
+  font-weight: 600;
+  padding: 0.2mm 1.8mm;
+  border-radius: 10px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  margin-left: 1.5mm;
+}
