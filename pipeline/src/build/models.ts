@@ -44,16 +44,16 @@ interface Sleeves {
 
 const MARKETS: Record<'US' | 'IN', Sleeves> = {
   US: {
-    equity: (p) => (p >= 4 ? ['SPY', 'QQQ', 'VEA', 'VWO'] : ['SPY', 'VEA', 'VWO']),
-    defensive: (p) =>
-      p <= 2 ? ['AGG', 'IEF', 'SHY', 'TIP'] : p === 3 ? ['AGG', 'IEF', 'TIP'] : ['AGG', 'IEF'],
-    gold: 'GLD',
+    equity: (p) => (p >= 4 ? ['US-LARGE', 'US-TECH'] : ['US-LARGE']),
+    defensive: (p) => (p <= 2 ? ['UST2Y', 'UST10Y', 'CASH-USD'] : p === 3 ? ['UST2Y', 'UST10Y'] : ['UST10Y']),
+    gold: 'GOLD-USD',
     currency: 'USD',
   },
   IN: {
-    equity: () => ['NIFTYBEES.NS', 'JUNIORBEES.NS', 'MON100.NS'],
-    defensive: () => ['SETF10GILT.NS', 'CASH-INR'],
-    gold: 'GOLDBEES.NS',
+    equity: (p) =>
+      p >= 4 ? ['NIFTY50', 'NIFTYNEXT50', 'MIDCAP150', 'SP500-INR'] : ['NIFTY50', 'NIFTYNEXT50', 'SP500-INR'],
+    defensive: (p) => (p <= 2 ? ['GILT10Y', 'CORPBOND', 'CASH-INR'] : ['GILT10Y', 'CORPBOND']),
+    gold: 'GOLD-INR',
     currency: 'INR',
   },
 };

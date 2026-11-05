@@ -15,14 +15,14 @@ export const SCHEMA_VERSION = 1;
 
 export type Currency = 'USD' | 'INR';
 export type Region = 'US' | 'IN' | 'DEV' | 'EM' | 'GLOBAL';
-export type AssetKind = 'etf' | 'stock' | 'index' | 'crypto' | 'fx' | 'rate' | 'future' | 'cash';
+export type AssetKind = 'fund' | 'etf' | 'stock' | 'index' | 'crypto' | 'fx' | 'rate' | 'future' | 'cash';
 export type AssetClass =
   'equity' | 'bond' | 'commodity' | 'real-estate' | 'crypto' | 'cash' | 'currency' | 'volatility' | 'rate';
 
 export interface AssetMeta {
   /** File-safe identifier (also the URL slug). */
   id: string;
-  /** Yahoo Finance symbol (or a synthetic id for constructed assets). */
+  /** Compact display code (ticker-like), e.g. "NIFTY50" or "UST10Y". */
   symbol: string;
   name: string;
   short: string;
@@ -42,7 +42,21 @@ export interface AssetMeta {
   /** Benchmark id for beta/relative stats. */
   benchmark?: string;
   tags?: string[];
+  /** Where the numbers come from, in plain words (shown on the asset page). */
+  provenance?: { provider: string; detail: string; url?: string };
 }
+
+export type DataSource =
+  | 'amfi'
+  | 'fred'
+  | 'binance'
+  | 'ecb'
+  | 'french'
+  | 'model'
+  | 'derived'
+  | 'previous-deploy'
+  | 'constructed'
+  | 'synthetic';
 
 export interface Quote {
   price: number;
@@ -114,7 +128,7 @@ export interface AssetSnapshot {
   /** Plain-English one-paragraph summary generated from the numbers. */
   summary: string;
   history: { start: string; end: string; points: number; hash: string };
-  source: 'yahoo' | 'stooq' | 'previous-deploy' | 'constructed' | 'synthetic';
+  source: DataSource;
 }
 
 export interface RegimeState {

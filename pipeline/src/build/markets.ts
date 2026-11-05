@@ -93,9 +93,27 @@ interface MoodSpec {
   junk?: [string, string];
 }
 
+/** Annualised 20-day realised volatility of daily log returns, one value per day from day 21. */
+export function realisedVol(values: number[], window = 20, periodsPerYear = 252): number[] {
+  const out: number[] = [];
+  for (let i = window + 1; i < values.length; i++) {
+    let s = 0;
+    let s2 = 0;
+    for (let k = i - window + 1; k <= i; k++) {
+      const r = Math.log(values[k] / values[k - 1]);
+      s += r;
+      s2 += r * r;
+    }
+    const m = s / window;
+    out.push(Math.sqrt(Math.max(0, s2 / window - m * m) * periodsPerYear));
+  }
+  return out;
+}
+
 export function moodFor(spec: MoodSpec, universe: Universe): MoodInfo | null {
   const comps: MoodComponent[] = [];
   const vix = spec.vix ? universe.get(spec.vix) : undefined;
+  const idx = universe.get(spec.index);
   if (vix) {
     const p = latestPercentile(vix.series.values, 252);
     if (p !== null)
@@ -105,8 +123,19 @@ export function moodFor(spec: MoodSpec, universe: Universe): MoodInfo | null {
         score: Math.round(100 * (1 - p)),
         detail: `${vix.meta.short} at ${explain.number(vix.quote.price, 1)} — ${p < 0.5 ? 'calmer' : 'more fearful'} than ${Math.round(100 * (p < 0.5 ? 1 - p : p))}% of the past year.`,
       });
+  } else if (idx) {
+    // No freely licensed implied-volatility index (India VIX is NSE-licensed),
+    // so use the market's own 20-day realised volatility.
+    const rv = realisedVol(idx.series.values);
+    const p = latestPercentile(rv, 252);
+    if (p !== null)
+      comps.push({
+        key: 'volatility',
+        label: 'Volatility',
+        score: Math.round(100 * (1 - p)),
+        detail: `${idx.meta.short} has been swinging ${explain.pct(rv[rv.length - 1], 0)} a year (last 20 days) — ${p < 0.5 ? 'calmer' : 'choppier'} than ${Math.round(100 * (p < 0.5 ? 1 - p : p))}% of the past year.`,
+      });
   }
-  const idx = universe.get(spec.index);
   if (idx) {
     const s125 = sma(idx.series.values, 125);
     const gaps = idx.series.values.map((v, i) => v / s125[i] - 1);
@@ -127,7 +156,7 @@ export function moodFor(spec: MoodSpec, universe: Universe): MoodInfo | null {
       key: 'breadth',
       label: 'Breadth',
       score: Math.round(100 * above),
-      detail: `${Math.round(100 * above)}% of tracked stocks trade above their 50-day average.`,
+      detail: `${Math.round(100 * above)}% of tracked sector, size and strategy funds trade above their 50-day average.`,
     });
     const highs = withTech.filter((m) => m.tech!.fromHigh52 > -0.03).length;
     const lows = withTech.filter((m) => m.tech!.price <= m.tech!.low52 * 1.03).length;

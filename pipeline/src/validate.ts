@@ -2,7 +2,8 @@
  * Publication gate. The deploy job only ships a snapshot that passes:
  *  1. schema validation (zod) — structural contract with the web app,
  *  2. completeness — core instruments present, ≥ N % of the universe,
- *  3. freshness — core US data no older than the staleness budget,
+ *  3. freshness — no core instrument older than twice the staleness budget
+ *     (older than the budget is a warning: a holiday or one late source),
  *  4. sanity — finite, positive prices; bounded statistics.
  * A failure exits non-zero, so GitHub Pages simply keeps serving the last
  * good deployment: users never see a broken or half-empty site.
@@ -113,11 +114,15 @@ export function validateSnapshot(
     warnings.push(
       `coverage ${(coverage * 100).toFixed(0)}% (${opts.universeSize - snap.assets.length} instruments missing)`,
     );
-  const spy = snap.assets.find((a) => a.meta.id === 'SPY');
-  if (spy) {
-    const ageDays = (opts.now.getTime() - Date.parse(spy.history.end)) / 86_400_000;
-    if (ageDays > opts.maxStaleDays)
-      errors.push(`stale data: SPY last bar ${spy.history.end} (${ageDays.toFixed(1)} days old)`);
+  const byId = new Map(snap.assets.map((a) => [a.meta.id, a]));
+  for (const id of CORE_IDS) {
+    const a = byId.get(id);
+    if (!a) continue;
+    const ageDays = (opts.now.getTime() - Date.parse(a.history.end)) / 86_400_000;
+    if (ageDays > 2 * opts.maxStaleDays)
+      errors.push(`stale data: ${id} last point ${a.history.end} (${ageDays.toFixed(1)} days old)`);
+    else if (ageDays > opts.maxStaleDays)
+      warnings.push(`${id}: last point ${a.history.end} (${ageDays.toFixed(1)} days old)`);
   }
   for (const a of snap.assets) {
     const v = a.stats.vol1y;

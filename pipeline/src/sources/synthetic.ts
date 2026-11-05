@@ -11,19 +11,33 @@ import type { AssetMeta } from '@frontier/contracts';
 import { createRng, isWeekday, toEpochDay, type Series } from '@frontier/quant';
 
 const INCEPTION: Record<string, string> = {
-  XLRE: '2015-10-08',
-  XLC: '2018-06-19',
-  MTUM: '2013-04-18',
-  QUAL: '2013-07-18',
-  USMV: '2011-10-20',
-  'BTC-USD': '2014-09-17',
-  'ETH-USD': '2017-11-09',
-  'SOL-USD': '2020-04-10',
-  'MON100.NS': '2011-03-31',
-  'SILVERBEES.NS': '2022-02-01',
-  'SETF10GILT.NS': '2016-07-01',
-  'GOLDBEES.NS': '2007-03-19',
-  TIP: '2005-01-03',
+  NIFTYNEXT50: '2010-06-29',
+  NIFTY500: '2019-09-11',
+  MIDCAP150: '2019-09-11',
+  SMALLCAP250: '2019-09-11',
+  NIFTYBANK: '2019-09-11',
+  NIFTYIT: '2022-08-19',
+  NIFTYPHARMA: '2022-12-15',
+  NIFTYAUTO: '2022-10-12',
+  MANUFACTURING: '2022-02-01',
+  DEFENCE: '2024-07-09',
+  REALTY: '2024-03-26',
+  CONSUMPTION: '2024-11-06',
+  EQUALWEIGHT50: '2017-10-23',
+  MOMENTUM30: '2021-03-12',
+  LOWVOL30: '2021-04-13',
+  VALUE20: '2021-02-23',
+  QUALITY30: '2021-10-07',
+  'SP500-INR': '2020-04-29',
+  'NASDAQ100-INR': '2018-11-29',
+  'US-TECH': '2018-11-29',
+  'GOLD-INR': '2007-04-13',
+  'SILVER-INR': '2022-02-08',
+  CORPBOND: '2013-01-01',
+  'BTC-USD': '2017-08-17',
+  'ETH-USD': '2017-08-17',
+  'SOL-USD': '2020-08-11',
+  DOLLAR: '2006-01-02',
 };
 
 interface Profile {
@@ -34,41 +48,53 @@ interface Profile {
   level: number;
 }
 
+const BOND_VOL: Record<string, number> = {
+  UST2Y: 0.015,
+  UST10Y: 0.07,
+  UST30Y: 0.14,
+  GILT10Y: 0.05,
+  CORPBOND: 0.025,
+};
+
 function profile(a: AssetMeta): Profile {
+  if (a.tags?.includes('factor')) return { mu: 0.01, vol: 0.08, beta: 0, factor: 'NONE', level: 100 };
   if (a.assetClass === 'crypto')
-    return { mu: 0.45, vol: 0.75, beta: 1, factor: 'CRYPTO', level: a.id === 'BTC-USD' ? 400 : 50 };
+    return { mu: 0.45, vol: 0.75, beta: 1, factor: 'CRYPTO', level: a.id === 'BTC-USD' ? 4000 : 50 };
   if (a.assetClass === 'bond') {
-    const v = a.id === 'TLT' ? 0.14 : a.id === 'SHY' ? 0.015 : a.id === 'HYG' ? 0.08 : 0.055;
+    const v = BOND_VOL[a.id] ?? 0.05;
     return {
-      mu: 0.03 + v * 0.1,
+      mu: 0.03 + v * 0.1 + (a.currency === 'INR' ? 0.03 : 0),
       vol: v,
-      beta: a.id === 'HYG' ? 0.3 : 1,
-      factor: a.id === 'HYG' ? 'US' : 'BOND',
+      beta: 1,
+      factor: 'BOND',
       level: 100,
     };
   }
-  if (a.assetClass === 'commodity')
+  if (a.assetClass === 'commodity') {
+    if (a.kind === 'index') return { mu: 0.02, vol: 0.32, beta: 0.4, factor: 'NONE', level: 80 };
     return {
-      mu: 0.06,
-      vol: a.id.includes('SILVER') || a.id === 'SLV' ? 0.28 : 0.16,
+      mu: 0.07,
+      vol: a.id.includes('SILVER') ? 0.28 : 0.16,
       beta: 0.8,
       factor: 'GOLD',
-      level: a.region === 'IN' ? 40 : 120,
+      level: a.currency === 'INR' ? 20 : 1500,
     };
+  }
   if (a.assetClass === 'volatility')
     return { mu: 0, vol: 0.9, beta: -3, factor: a.region === 'IN' ? 'IN' : 'US', level: 18 };
   if (a.assetClass === 'rate')
-    return { mu: 0, vol: 0.25, beta: 0.2, factor: 'BOND', level: a.id === 'IRX' ? 3.5 : 4 };
+    return { mu: 0, vol: 0.25, beta: 0.2, factor: 'BOND', level: a.id === 'US3M' ? 3.5 : 4 };
   if (a.assetClass === 'currency')
-    return { mu: 0.02, vol: 0.06, beta: 0, factor: 'NONE', level: a.id === 'USDINR' ? 45 : 90 };
-  const stock = a.kind === 'stock';
-  const region = a.region === 'IN' ? 'IN' : 'US';
+    return { mu: 0.025, vol: 0.06, beta: 0, factor: 'NONE', level: a.id === 'USDINR' ? 60 : 100 };
+  const region = a.region === 'IN' && a.currency === 'INR' ? 'IN' : 'US';
+  const satellite = a.tags?.includes('sector') || a.tags?.includes('strategy');
+  const small = a.id === 'SMALLCAP250' || a.id === 'MIDCAP150';
   return {
-    mu: stock ? 0.11 : 0.09,
-    vol: stock ? 0.3 : a.tags?.includes('sector') ? 0.2 : 0.17,
-    beta: stock ? 1.1 : 1,
+    mu: region === 'IN' ? 0.12 : 0.09,
+    vol: small ? 0.24 : satellite ? 0.21 : 0.17,
+    beta: 1,
     factor: region,
-    level: a.kind === 'index' ? (region === 'IN' ? 2000 : 1200) : stock ? 50 : 80,
+    level: a.currency === 'INR' ? 20 : 100,
   };
 }
 

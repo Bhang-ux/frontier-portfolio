@@ -1,23 +1,35 @@
-# Source health probe — which market-data sources are reachable from GitHub's
-# runners with honestly identified requests. Manual or diagnostics branches.
-name: Source probe
+# Diagnostics: run the live pipeline against the real sources on a GitHub
+# runner WITHOUT deploying, and print a per-instrument coverage report.
+# Manual, or on pushes to diag/** branches.
+name: Pipeline dry run
 
 on:
   workflow_dispatch:
   push:
     branches: ['diag/**']
-    paths: ['tools/probe-sources.mjs', '.github/workflows/probe-sources.yml']
+    paths:
+      - 'pipeline/**'
+      - 'packages/**'
+      - 'tools/data-report.mjs'
+      - 'tools/probe-sources.mjs'
+      - '.github/workflows/probe-sources.yml'
 
 permissions:
   contents: read
 
 jobs:
-  probe:
+  dryrun:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-      - run: node tools/probe-sources.mjs
+          cache: npm
+      - run: npm ci
+      - name: Live pipeline (full refresh, not deployed)
+        run: npm run start -w pipeline -- --out "$RUNNER_TEMP/data" --full-refresh
+      - name: Coverage report
+        if: always()
+        run: node tools/data-report.mjs "$RUNNER_TEMP/data"

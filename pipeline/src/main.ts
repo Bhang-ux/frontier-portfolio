@@ -6,7 +6,11 @@
  *
  * Usage:
  *   tsx src/main.ts [--synthetic] [--out ../web/public/data] [--site-url URL]
- *                   [--concurrency 4] [--min-coverage 0.85] [--max-stale-days 6]
+ *                   [--full-refresh] [--min-coverage 0.85] [--max-stale-days 6]
+ *
+ * Without --full-refresh (or FULL_REFRESH=1), fund histories are extended
+ * from the previous deploy and only refetched when AMFI reports a NAV that
+ * cannot simply be appended.
  */
 import { mkdir, rm, writeFile, appendFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -37,7 +41,7 @@ interface Args {
   synthetic: boolean;
   out: string;
   siteUrl?: string;
-  concurrency: number;
+  fullRefresh?: boolean;
   minCoverage: number;
   maxStaleDays: number;
   start: string;
@@ -53,7 +57,7 @@ function parseArgs(argv: string[]): Args {
     synthetic: argv.includes('--synthetic'),
     out: path.resolve(get('--out') ?? path.join(here, '..', '..', 'web', 'public', 'data')),
     siteUrl: get('--site-url') ?? process.env.SITE_URL,
-    concurrency: Number(get('--concurrency') ?? 4),
+    fullRefresh: argv.includes('--full-refresh') || process.env.FULL_REFRESH === '1',
     minCoverage: Number(get('--min-coverage') ?? 0.85),
     maxStaleDays: Number(get('--max-stale-days') ?? 6),
     start: get('--start') ?? '2005-01-01',
@@ -69,13 +73,15 @@ const ghNotice = (kind: 'notice' | 'warning' | 'error', msg: string) => {
 export async function run(args: Args): Promise<number> {
   const t0 = Date.now();
   const now = new Date();
-  log(`▶ Frontier pipeline — ${args.synthetic ? 'SYNTHETIC (dev only)' : 'live'} — ${now.toISOString()}`);
+  log(
+    `▶ Frontier pipeline — ${args.synthetic ? 'SYNTHETIC (dev only)' : args.fullRefresh ? 'live, full refresh' : 'live'} — ${now.toISOString()}`,
+  );
 
   // 1. acquire
   const acq = await acquire({
     synthetic: args.synthetic,
     siteUrl: args.siteUrl,
-    concurrency: args.concurrency,
+    fullRefresh: args.fullRefresh,
     start: args.start,
     now,
     log,
@@ -92,6 +98,15 @@ export async function run(args: Args): Promise<number> {
       analyzed.set(a.meta.id, analyzeAsset(a, acq.universe, rf));
     } catch (e) {
       acq.failures.push({ id: a.meta.id, reason: `analysis: ${(e as Error).message}` });
+    }
+  }
+  // Monthly academic data (Fama–French) lags by weeks: never report its last
+  // print as "today's" move.
+  for (const a of analyzed.values()) {
+    const lastDay = a.asset.series.dates[a.asset.series.dates.length - 1];
+    if (now.getTime() / 86_400_000 - lastDay > 7) {
+      a.stats.returns.d1 = null;
+      a.stats.returns.w1 = null;
     }
   }
   const signals = computeSignals([...analyzed.values()]);
@@ -128,27 +143,27 @@ export async function run(args: Args): Promise<number> {
     [...analyzed.values()].filter(
       (a) =>
         a.asset.meta.region === region &&
-        (a.asset.meta.kind === 'stock' || a.asset.meta.tags?.includes('sector')),
+        a.asset.meta.assetClass === 'equity' &&
+        a.asset.meta.investable &&
+        a.asset.meta.currency === (region === 'US' ? 'USD' : 'INR'),
     );
   const markets: MarketSummary[] = [];
   for (const spec of [
     {
       key: 'US' as const,
       name: 'US',
-      index: 'GSPC',
-      vix: 'VIX',
-      riskOn: 'SPY',
-      safeHaven: 'TLT',
-      junk: ['HYG', 'IEF'] as [string, string],
+      index: 'US-LARGE',
+      vix: 'VIX' as string | undefined,
+      riskOn: 'US-LARGE',
+      safeHaven: 'UST10Y',
     },
     {
       key: 'IN' as const,
       name: 'Indian',
-      index: 'NSEI',
-      vix: 'INDIAVIX',
-      riskOn: 'NIFTYBEES.NS',
-      safeHaven: 'GOLDBEES.NS',
-      junk: undefined,
+      index: 'NIFTY50',
+      vix: undefined,
+      riskOn: 'NIFTY50',
+      safeHaven: 'GOLD-INR',
     },
   ]) {
     const idx = acq.universe.get(spec.index);
@@ -168,7 +183,6 @@ export async function run(args: Args): Promise<number> {
         members: members(spec.key),
         riskOn: spec.riskOn,
         safeHaven: spec.safeHaven,
-        junk: spec.junk,
       },
       acq.universe,
     );
@@ -223,6 +237,7 @@ export async function run(args: Args): Promise<number> {
     maxStaleDays: args.maxStaleDays,
     now,
   });
+  report.warnings.push(...acq.warnings);
   report.warnings.forEach((w) => log(`  ⚠ ${w}`));
   acq.failures.forEach((f) => ghNotice('warning', `${f.id}: ${f.reason}`));
   if (!report.ok) {
