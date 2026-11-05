@@ -21,8 +21,8 @@ const architectureSvg = `
 <svg viewBox="0 0 700 430" width="100%" xmlns="http://www.w3.org/2000/svg">${defs}
   <rect x="8" y="8" width="214" height="414" rx="10" fill="#f4f6fa" stroke="#e3e6ee"/>
   <text x="20" y="28" font-size="11" font-weight="700" fill="#4f46e5">GitHub Actions · scheduled ETL</text>
-  ${box(20, 40, 190, 50, '1 · Acquire', ['Yahoo v8 chart API · FRED CSV', 'retries · crumb fallback · 4-way pool'])}
-  ${box(20, 100, 190, 50, '2 · Clean', ['exchange-local dates · dedupe', 'spike filter · split/div adjusted'])}
+  ${box(20, 40, 190, 50, '1 · Acquire', ['AMFI · FRED · ECB · Binance · F–F', 'NAVAll check · append · 429 backoff'])}
+  ${box(20, 100, 190, 50, '2 · Clean & derive', ['dedupe · unit-split repair · spikes', 'chain-link splices · bond model'])}
   ${box(20, 160, 190, 63, '3 · Analyse (@frontier/quant)', ['stats · signals · HMM regimes', 'Market Mood · breadth', 'model portfolios (ERC sleeves)'])}
   ${box(20, 233, 190, 50, '4 · Validation gate', ['zod schema · coverage ≥ 85%', 'freshness · sanity · core ids'], '#fff7ed', '#f5c28b')}
   ${box(20, 293, 190, 50, '5 · Publish static JSON', ['manifest · snapshot · history/*', 'content hashes (FNV-1a)'])}
@@ -31,8 +31,8 @@ const architectureSvg = `
   <rect x="250" y="120" width="190" height="190" rx="10" fill="#eef2ff" stroke="#c7d2fe"/>
   <text x="262" y="140" font-size="11" font-weight="700" fill="#4f46e5">GitHub Pages CDN</text>
   ${box(262, 150, 166, 46, 'App shell (Vite build)', ['~220 KB gzip initial · route chunks', 'index.html per route + 404.html'])}
-  ${box(262, 204, 166, 46, 'data/manifest.json', ['~9 KB · polled every 120 s', 'points to hashed files'])}
-  ${box(262, 258, 166, 44, 'snapshot.json · history/*.json', ['86 KB gz · ~19 KB gz / instrument'])}
+  ${box(262, 204, 166, 46, 'data/manifest.json', ['~4 KB · polled every 120 s', 'points to hashed files'])}
+  ${box(262, 258, 166, 44, 'snapshot.json · history/*.json', ['46 KB gz · ~11 KB gz / instrument'])}
   ${arrow(210, 380, 300, 302, 'upload-pages-artifact')}
   <rect x="470" y="40" width="222" height="370" rx="10" fill="#f0fdfa" stroke="#99f6e4"/>
   <text x="482" y="60" font-size="11" font-weight="700" fill="#0d9488">User's browser</text>
@@ -45,10 +45,10 @@ const architectureSvg = `
   ${arrow(581, 148, 581, 158)}
   <rect x="250" y="355" width="190" height="55" rx="10" fill="#fff" stroke="#e3e6ee"/>
   <text x="262" y="374" font-size="10.5" font-weight="650" fill="#0f1320">Binance public WebSocket</text>
-  <text x="262" y="389" font-size="8.6" fill="#3c4456">live BTC/ETH/SOL ticks · backoff</text>
+  <text x="262" y="389" font-size="8.6" fill="#3c4456">live BTC/ETH/SOL/PAXG ticks · backoff</text>
   <text x="262" y="401" font-size="8.6" fill="#3c4456">pauses when the tab is hidden</text>
   ${arrow(440, 382, 482, 330, '', true, '#0d9488')}
-  <text x="238" y="60" font-size="8.6" fill="#6a7285">Yahoo Finance ·</text><text x="238" y="72" font-size="8.6" fill="#6a7285">FRED (OECD/US)</text>
+  <text x="238" y="60" font-size="8.6" fill="#6a7285">AMFI · FRED · ECB</text><text x="238" y="72" font-size="8.6" fill="#6a7285">Binance · Fama–French</text>
   ${arrow(232, 66, 212, 66, '', true)}
   <line x1="300" y1="120" x2="212" y2="78" stroke="#9aa3b8" stroke-width="1.2" stroke-dasharray="3 3"/>
   <text x="262" y="112" font-size="8" fill="#6a7285">previous deploy = per-asset fallback</text>
@@ -58,7 +58,7 @@ const timelineSvg = (() => {
   const steps = [
     ['cron fires (:17)', 'queue delay 0–15 min'],
     ['runner + npm ci', '~40 s'],
-    ['fetch ~100 instruments', '~60–120 s · 4 in flight'],
+    ['fetch 45 instruments', '~10–20 s · NAVAll + deltas'],
     ['analyse + validate', '~3–6 s'],
     ['vite build', '~15 s'],
     ['Pages deploy', '~30–60 s'],
@@ -93,7 +93,7 @@ const pyramidSvg = `
   <polygon points="210,108 490,108 550,146 150,146" fill="#818cf8"/>
   <text x="350" y="132" font-size="9.5" font-weight="650" text-anchor="middle" fill="#fff">19 golden tests vs scikit-learn · PyPortfolioOpt · CVXPY</text>
   <polygon points="150,150 550,150 610,188 90,188" fill="#4f46e5"/>
-  <text x="350" y="174" font-size="9.5" font-weight="650" text-anchor="middle" fill="#fff">68 unit tests · quant engine, pipeline parsers, validation, web logic</text>
+  <text x="350" y="174" font-size="9.5" font-weight="650" text-anchor="middle" fill="#fff">78 unit tests · quant engine, source adapters, splicing, validation, web logic</text>
   <text x="615" y="60" font-size="8.6" fill="#6a7285">every deploy</text>
   <text x="560" y="100" font-size="8.6" fill="#6a7285">every push (CI)</text>
   <text x="600" y="140" font-size="8.6" fill="#6a7285">+ fixtures re-derived</text>
@@ -121,7 +121,7 @@ const cover = (s) => `
   <div>
     <div class="grid3" style="margin-bottom:6mm">
       <div class="kpi"><div class="v">${s.total.toLocaleString()}</div><div class="l">non-blank lines across TS · TSX · CSS · YAML · Python</div></div>
-      <div class="kpi"><div class="v">113 tests</div><div class="l">87 unit &amp; golden (Vitest) + 26 end-to-end (Playwright)</div></div>
+      <div class="kpi"><div class="v">123 tests</div><div class="l">97 unit &amp; golden (Vitest) + 26 end-to-end (Playwright)</div></div>
       <div class="kpi"><div class="v">$0 / month</div><div class="l">GitHub Pages + Actions; no servers, no database</div></div>
     </div>
     <div class="meta">
@@ -159,15 +159,15 @@ const summary = (s) => `
   <li><b>Architecture.</b> Stateless scheduled ETL → validation gate → content-hashed static API on a CDN → React SPA → Web Worker. Zero servers; the CDN is effectively the database and the cron is the backend.</li>
   <li><b>Quant core.</b> ${s.quant.toLocaleString()} lines, zero runtime dependencies: projected FISTA over exact constraint projections; Ledoit–Wolf and Bayes–Stein shrinkage; HRP; Black–Litterman; smoothed CVaR; Gaussian HMM; stationary bootstrap. Golden tests reproduce Python reference libraries to 1e-12.</li>
   <li><b>Beginner layer.</b> Risk questionnaire separating tolerance from capacity with hard safety caps; forecast-free model portfolios (risk budgeting within sleeves); deterministic natural-language explanations — no LLM, so explanations can never invent a number.</li>
-  <li><b>Engineering quality.</b> 113 automated tests, CI that re-derives fixtures in Python, a validation gate that prevents bad data from ever shipping, post-deploy smoke tests, keepalive for the 60-day cron rule, CodeQL and Dependabot.</li>
+  <li><b>Engineering quality.</b> 123 automated tests, CI that re-derives fixtures in Python, a validation gate that prevents bad data from ever shipping, post-deploy smoke tests, keepalive for the 60-day cron rule, CodeQL and Dependabot.</li>
 </ol>
 <h2>Key facts</h2>
 <table>
   <tr><th>Dimension</th><th>Value</th><th>Where it lives</th></tr>
-  <tr><td>Universe</td><td>98 fetched instruments + 2 constructed cash indices (US &amp; India)</td><td><code>pipeline/src/universe.ts</code></td></tr>
+  <tr><td>Universe</td><td>45 instruments: 26 Indian funds (AMFI NAVs, incl. the liquid fund used as rupee cash), 2 USD views of US-equity funds, 3 modelled Treasury indices, PAX Gold + 3 cryptos (Binance), 6 FRED references (VIX, yields, USD/INR, dollar, Brent), 3 Fama–French factors, T-bill cash</td><td><code>pipeline/src/universe.ts</code></td></tr>
   <tr><td>Refresh cadence</td><td>Hourly at :17 Mon–Fri (UTC); every 4 h at :47 Sat–Sun</td><td><code>.github/workflows/deploy.yml</code></td></tr>
-  <tr><td>History depth</td><td>Daily since 2005-01-01, dividend &amp; split adjusted</td><td><code>pipeline/src/acquire.ts</code></td></tr>
-  <tr><td>Payloads</td><td>manifest ~9 KB; snapshot ~86 KB gzip; ~19 KB gzip per instrument history</td><td><code>packages/contracts</code></td></tr>
+  <tr><td>History depth</td><td>Daily since 2005-01-01 where it exists; fund NAVs are total return (Growth plans), Regular-plan or Fama–French history chain-linked before a fund's launch</td><td><code>pipeline/src/acquire.ts</code></td></tr>
+  <tr><td>Payloads</td><td>manifest ~4 KB; snapshot ~46 KB gzip; ~11 KB gzip per instrument history</td><td><code>packages/contracts</code></td></tr>
   <tr><td>Front-end</td><td>~220 KB gzip initial (JS+CSS), worker 24 KB, routes 4–10 KB each</td><td><code>web/vite.config.ts</code></td></tr>
   <tr><td>Code size</td><td>quant ${s.quant.toLocaleString()} · pipeline+contracts ${s.pipeline.toLocaleString()} · web ${s.web.toLocaleString()} · tests ${s.tests.toLocaleString()} lines</td><td>monorepo, npm workspaces</td></tr>
   <tr><td>Optimiser speed</td><td>Max-Sharpe ≈ 9 ms for 6 assets; 20-year quarterly walk-forward ≈ 1 s</td><td><code>packages/quant/src/optimize</code></td></tr>
@@ -183,39 +183,58 @@ const architecture = () => `
   <tr><th>Package</th><th>Responsibility</th><th>Key dependencies</th></tr>
   <tr><td><code>packages/quant</code></td><td>Numerical engine: linear algebra, statistics, covariance &amp; return estimators, optimisers, Monte Carlo, backtests, HMM, factors, stress tests, health score, natural-language explanations.</td><td>none (by design)</td></tr>
   <tr><td><code>packages/contracts</code></td><td>TypeScript types for every published JSON document + the history codec and content hash. The single source of truth for the pipeline ⇄ web interface.</td><td>none</td></tr>
-  <tr><td><code>pipeline</code></td><td>Scheduled ETL: universe definition, HTTP layer (retry/backoff/limiter), Yahoo &amp; FRED clients, previous-deploy fallback, analytics stage, validation gate, publisher.</td><td>zod, quant, contracts</td></tr>
+  <tr><td><code>pipeline</code></td><td>Scheduled ETL: universe with a per-instrument source spec, HTTP layer (retry/backoff/limiter), AMFI/FRED/ECB/Binance/Fama–French adapters, cleaning &amp; chain-link splicing, modelled Treasury indices, previous-deploy fallback, analytics stage, validation gate, publisher.</td><td>zod, quant, contracts</td></tr>
   <tr><td><code>web</code></td><td>React 19 SPA: app shell, nine pages, chart library, Comlink worker, state stores, live WebSocket feed, PWA config, post-build route generation.</td><td>React, React Router, React Query, Zustand, d3-scale/shape, Radix, motion</td></tr>
   <tr><td><code>e2e</code>, <code>tools</code></td><td>Playwright journeys; Python reference generator for golden fixtures; README screenshot tool.</td><td>Playwright; NumPy, SciPy, scikit-learn, CVXPY, PyPortfolioOpt</td></tr>
 </table>
 <h2>2.3 Lifecycle of a refresh</h2>
 <figure>${timelineSvg}<figcaption>Figure 2 — From cron trigger to pixels.</figcaption></figure>
 <ol>
-  <li><b>Acquire</b> (<code>pipeline/src/acquire.ts</code>). For each of 98 symbols, the Yahoo v8 chart endpoint is called with <code>period1</code> = 2005-01-01 through a 4-slot concurrency limiter. Hosts alternate between query1/query2. 429 and 5xx responses are retried up to 4 times with exponential backoff and full jitter, honouring <code>Retry-After</code>. A 401/403 triggers a one-time cookie + crumb handshake (the yfinance technique). If a symbol still fails, its history is fetched from the <i>currently deployed site</i> instead; only then is it recorded as a failure. Risk-free rates come from <code>^IRX</code> (US) and FRED's OECD India 3-month rate, and constructed cash indices accrue those rates daily.</li>
-  <li><b>Clean</b> (<code>sources/yahoo.ts</code>). Timestamps are converted to <i>exchange-local</i> calendar days using the response's <code>gmtoffset</code>; nulls are dropped; duplicates resolve to the latest print; one-day spikes of more than 40 % that fully revert the next day are removed as bad prints.</li>
+  <li><b>Acquire</b> (<code>pipeline/src/acquire.ts</code>). Every instrument is a <i>memoised async loader</i> driven by its source spec, so derived series simply await their inputs (the USD view of the S&amp;P 500 fund awaits the fund and USD/INR) and nothing is fetched twice. First, AMFI's <code>NAVAll.txt</code> — today's NAV for all ~14 000 schemes in one request — is compared with the history already on the live site: if a fund has no new NAV it is reused; if the new NAV directly follows the last one (no weekday could have been skipped) it is appended; only otherwise is the full history fetched from mfapi.in, serialised and backed off because mfapi rate-limits bursts. FRED CSVs, ECB rates (Frankfurter), Binance klines (paginated, 1 000 per call) and the Fama–French ZIPs (weekly) complete the set. Any failure falls back to the instrument's copy on the <i>currently deployed site</i>; only then is it recorded as a failure. The rupee risk-free rate is the liquid fund's trailing three-month return; the dollar rate is the 3-month T-bill.</li>
+  <li><b>Clean &amp; derive</b> (<code>sources/clean.ts</code>, <code>build/bonds.ts</code>). One cleaning path for every source: sort, last duplicate wins, drop non-positive prints; undo unit splits in fund NAVs (a persistent ×k jump at a round k ≥ 5 — one gold ETF in the data really was re-denominated 1:100); remove one-day spikes that fully revert. Then derivations: chain-link Regular-plan NAVs before 2013 and Fama–French US returns (in rupees) before the S&amp;P 500 fund launched; convert INR funds to USD views; build constant-maturity Treasury total-return indices from yields.</li>
   <li><b>Analyse</b> (<code>pipeline/src/build/*</code>). Per asset: trailing returns on calendar windows, risk statistics on 1/3/5-year windows with the calendar's empirical periods-per-year, weekly-return betas, technical indicators and a composite trend score ranked within peer groups. Per market: a two-state HMM regime, a six-component Market Mood score, breadth and a headline sentence. Ten model portfolios (5 profiles × 2 markets) are built and backtested.</li>
-  <li><b>Validate</b> (<code>pipeline/src/validate.ts</code>). zod schema; all core instruments present; ≥ 85 % coverage; SPY's last bar ≤ 6 days old; finite, positive prices; ≥ 6 model portfolios. Failure exits non-zero: <b>nothing is deployed and the last good site keeps serving</b>.</li>
+  <li><b>Validate</b> (<code>pipeline/src/validate.ts</code>). zod schema; all nine core instruments present; ≥ 85 % coverage; no core instrument older than 12 days (older than 6 is a warning — an Indian holiday plus a weekend is normal); finite, positive prices; ≥ 6 model portfolios. Failure exits non-zero: <b>nothing is deployed and the last good site keeps serving</b>.</li>
   <li><b>Publish &amp; deploy</b>. One JSON file per instrument plus snapshot, intraday and manifest; Vite builds the app; <code>actions/deploy-pages</code> publishes atomically; a smoke job polls the live manifest until its <code>generatedAt</code> equals the one just built and checks that deep links return 200.</li>
   <li><b>Consume</b>. Open tabs poll the manifest every 120 s; when the snapshot hash changes, React Query fetches the new snapshot and a toast announces fresh data. Unchanged histories are never re-downloaded.</li>
 </ol>
-<h2>2.4 The static data API</h2>
+<h2>2.4 Data sources &amp; licensing — the redesign</h2>
+<p><b>What happened.</b> The first design used Yahoo Finance's keyless chart API (the yfinance approach). On the first live run every one of 98 symbols returned HTTP 429 from GitHub's runners, and the validation gate — correctly — refused to deploy a 2 %-complete dataset. Yahoo's terms also prohibit automated access, so instead of disguising the client as a browser (rejected outright: it is evasion, not engineering), the client now identifies itself honestly (<code>FrontierPortfolioBot/1.0 (+repo URL)</code>) and a <b>probe workflow</b> measured, from a real runner, which sources answer such a client. A second finding: FRED tags the S&amp;P 500, Dow and Nasdaq series <i>“Copyrighted: Pre-Approval Required”</i>, so they are not republished either.</p>
+<table>
+  <tr><th>Source</th><th>Used for</th><th>Why it is allowed</th><th>Cadence</th></tr>
+  <tr><td>AMFI (NAVAll.txt) + mfapi.in</td><td>26 Indian Direct-Growth funds: Nifty 50/Next 50/500, mid &amp; small caps, 9 sectors, 5 smart-beta strategies, S&amp;P 500 &amp; Nasdaq-100 in rupees, gold, silver, gilts, corporate bonds, liquid fund</td><td>NAVs are mandatory public disclosures; mfapi is a free mirror built for programmatic use</td><td>daily (evening IST)</td></tr>
+  <tr><td>FRED</td><td>Treasury yields (2/10/30y), T-bills, USD/INR history, broad dollar index, Brent</td><td>tagged Public Domain</td><td>daily (FX weekly)</td></tr>
+  <tr><td>FRED · CBOE</td><td>VIX</td><td>“Copyrighted: Citation Required” — cited on the asset page</td><td>daily</td></tr>
+  <tr><td>ECB via Frankfurter</td><td>latest USD/INR, extending FRED's weekly-lagged H.10 series</td><td>ECB reference rates are free to reuse with attribution</td><td>daily</td></tr>
+  <tr><td>Binance public data</td><td>Bitcoin, Ethereum, Solana, PAX Gold (dollar gold); 5-minute intraday; live WebSocket</td><td>dedicated public market-data host</td><td>continuous</td></tr>
+  <tr><td>Kenneth R. French Data Library</td><td>US market history before 2020; size, value and momentum factors</td><td>published for research and teaching</td><td>monthly (lags ~5 weeks)</td></tr>
+</table>
+<p><b>Techniques the constraint forced</b> — each one is a good interview story:</p>
+<ul>
+  <li><b>Chain-link splicing.</b> Direct plans only exist since 2013, so core funds are extended with their Regular plan (≈0.5–1 %/yr more fees, disclosed); the S&amp;P 500 fund (launched 2020) with the Fama–French market return converted to rupees. Returns on both sides of the seam are preserved exactly.</li>
+  <li><b>Modelled Treasuries.</b> Treasury ETF prices are not republishable, but yields are public domain: a constant-maturity par bond is repriced daily, r = P(c = y<sub>t−1</sub>, y<sub>t</sub>, M − Δt) − 1 + y<sub>t−1</sub>Δt — carry, duration and convexity exactly.</li>
+  <li><b>USD views of INR funds.</b> “US Large Caps” is the S&amp;P 500 fund's NAV divided by USD/INR and rebased to 100 — total return net of fund costs, updated daily.</li>
+  <li><b>India's mood without India VIX.</b> India VIX is NSE-licensed, so the volatility component uses the Nifty's own 20-day realised volatility percentile.</li>
+  <li><b>Polite incremental ingestion.</b> One NAVAll request decides which of 26 funds changed; most runs download no fund history at all.</li>
+</ul>
+<h2>2.5 The static data API</h2>
 <table>
   <tr><th>Document</th><th>Contents</th><th>Caching strategy</th></tr>
   <tr><td><code>data/manifest.json</code></td><td>Schema version, generation time, synthetic flag, snapshot hash &amp; size, per-instrument history hash/end date/points, pipeline stats (duration, sources, failures, run id, commit).</td><td><code>fetch(…, {cache: 'no-cache'})</code> → revalidates every poll; service worker NetworkFirst with a 4 s timeout so the app still opens offline.</td></tr>
   <tr><td><code>data/snapshot.json?v=&lt;hash&gt;</code></td><td>All instruments' quotes, statistics, signals, summaries and sparklines; markets (regimes, mood, breadth); model portfolios; FX; risk-free rates; movers.</td><td>Immutable per hash → React Query <code>staleTime: Infinity</code>; service worker CacheFirst.</td></tr>
   <tr><td><code>data/history/&lt;id&gt;.json?v=&lt;hash&gt;</code></td><td>Delta-encoded epoch days + 6-significant-digit adjusted closes. Lazy-loaded only for instruments a page needs.</td><td>Same as snapshot; 30-minute in-memory GC.</td></tr>
-  <tr><td><code>data/intraday.json</code></td><td>5-minute bars for eight headline instruments.</td><td>Per hash.</td></tr>
+  <tr><td><code>data/intraday.json</code></td><td>5-minute bars for the 24/7 instruments (Bitcoin, Ethereum, Solana, PAX Gold).</td><td>Per hash.</td></tr>
 </table>
-<div class="box"><h4>Why a manifest?</h4><p>It is the <b>atomic pointer</b> of the system. Because every other file is addressed by content hash through the manifest, a client can never combine a new snapshot with an old history file — the classic “torn read” of multi-file static publishing. It also makes polling cheap: one ~9 KB request, conditional on ETag, every two minutes.</p></div>
-<h2>2.5 Client architecture</h2>
+<div class="box"><h4>Why a manifest?</h4><p>It is the <b>atomic pointer</b> of the system. Because every other file is addressed by content hash through the manifest, a client can never combine a new snapshot with an old history file — the classic “torn read” of multi-file static publishing. It also makes polling cheap: one ~4 KB request, conditional on ETag, every two minutes.</p></div>
+<h2>2.6 Client architecture</h2>
 <ul>
   <li><b>Routing.</b> React Router with a basename; all pages are lazy chunks. GitHub Pages has no rewrite rules, so <code>web/scripts/postbuild.mjs</code> writes an <code>index.html</code> into a folder per route <i>and per asset</i> (deep links return real 200s) plus a <code>404.html</code> fallback.</li>
   <li><b>State.</b> Zustand stores persisted to localStorage: settings (currency, Beginner/Pro mode, theme, estimation choices, risk profile, watchlist) and portfolios (weights + total value + currency). Share links encode a portfolio with lz-string into the URL fragment, which never reaches a server; imports are validated and capped.</li>
   <li><b>Server state.</b> React Query for the manifest (polled), snapshot and histories (immutable), and <i>worker computations</i>: each worker call is a query keyed by a fingerprint of its inputs, which gives de-duplication, caching and “keep previous result while recomputing” for free.</li>
   <li><b>Compute.</b> One module Web Worker exposes <code>analyze</code>, <code>optimize</code>, <code>walkForward</code>, <code>rebalanceStudy</code>, <code>monthlyReturns</code> and <code>simulate</code> via Comlink. Inputs are structured-cloned (≈100 k numbers for a 10-asset, 20-year portfolio — milliseconds). Results are decimated to ≤ 700 points per series before crossing back.</li>
   <li><b>Charts.</b> A small custom SVG library on d3-scale/d3-shape: index-based time axes (no weekend gaps), crosshair tooltips listing every series, keyboard navigation, shaded regime bands, a table-view twin for every chart, and a colour palette validated for colour-vision deficiency in both themes.</li>
-  <li><b>Live layer.</b> Stocks refresh with the pipeline; crypto streams over Binance's public WebSocket (market-data host first, main host second), with exponential reconnect and pausing in background tabs.</li>
+  <li><b>Live layer.</b> Fund NAVs (end-of-day by nature) refresh with the pipeline; crypto and PAX Gold stream over Binance's public WebSocket (market-data host first, main host second), with exponential reconnect and pausing in background tabs.</li>
 </ul>
-<h2>2.6 Deployment &amp; CI/CD</h2>
+<h2>2.7 Deployment &amp; CI/CD</h2>
 <table>
   <tr><th>Workflow</th><th>Trigger</th><th>What it guarantees</th></tr>
   <tr><td><code>ci.yml</code></td><td>every push &amp; PR</td><td>typecheck (4 projects), ESLint, Prettier, Vitest with coverage; Python re-derivation of golden fixtures then TS golden tests; production build with synthetic data; Playwright on desktop and mobile; bundle-size report.</td></tr>
@@ -224,19 +243,20 @@ const architecture = () => `
   <tr><td><code>maintenance.yml</code></td><td>weekly</td><td>re-enables scheduled workflows via the API, defeating GitHub's 60-day inactivity auto-disable.</td></tr>
   <tr><td><code>codeql.yml</code>, Dependabot</td><td>push, weekly</td><td>static security analysis; grouped dependency updates for npm, Actions and pip.</td></tr>
 </table>
-<h2>2.7 Failure modes</h2>
+<h2>2.8 Failure modes</h2>
 <table>
   <tr><th>Failure</th><th>Detection</th><th>Behaviour</th><th>User impact</th></tr>
-  <tr><td>One symbol 404/429s</td><td>HTTP layer</td><td>retry → previous-deploy copy → recorded in manifest</td><td>that asset's data ≤ 1 refresh stale</td></tr>
-  <tr><td>Yahoo blocks the runner IP</td><td>coverage &lt; 85 %</td><td>validation fails, no deploy, job red</td><td>site keeps last good data; freshness pill turns amber</td></tr>
-  <tr><td>Yahoo changes its JSON</td><td>parser throws → failures → gate</td><td>same as above</td><td>same as above</td></tr>
+  <tr><td>One request 404/429s</td><td>HTTP layer</td><td>retry with backoff (Retry-After honoured) → previous-deploy copy → recorded in manifest</td><td>that asset's data ≤ 1 refresh stale</td></tr>
+  <tr><td>A whole source is down (e.g. mfapi)</td><td>per-instrument fallbacks; coverage</td><td>NAVAll appends still work; else previous copies; gate fails only below 85 % or if a core id is &gt; 12 days old</td><td>site keeps last good data; asset pages say “previous copy”</td></tr>
+  <tr><td>A source changes its format</td><td>parser throws → failures → gate</td><td>same as above (NAVAll already switched from 6 to 8 columns once; the parser reads both)</td><td>same as above</td></tr>
+  <tr><td>A fund re-denominates its units</td><td>split detector in <code>clean.ts</code></td><td>earlier history rescaled</td><td>none</td></tr>
   <tr><td>Bad data slips (e.g. bad print)</td><td>spike filter; vol sanity warnings</td><td>point removed / warning logged</td><td>none</td></tr>
-  <tr><td>GitHub cron delayed or skipped</td><td>manifest age</td><td>next run catches up (stateless)</td><td>data older than an hour</td></tr>
+  <tr><td>GitHub cron delayed or skipped</td><td>manifest age</td><td>next run catches up (idempotent)</td><td>data older than an hour</td></tr>
   <tr><td>Deploy succeeds, CDN stale</td><td>smoke test hash compare</td><td>warning after 3 min</td><td>≤ 10 min (Pages max-age)</td></tr>
   <tr><td>Worker throws (infeasible constraints)</td><td>React Query error</td><td>readable message from the feasibility checker</td><td>explains how to fix the constraints</td></tr>
   <tr><td>WebSocket blocked</td><td>onerror/onclose</td><td>backoff, host rotation</td><td>crypto shows last snapshot price</td></tr>
 </table>
-<h2>2.8 Security &amp; privacy model</h2>
+<h2>2.9 Security &amp; privacy model</h2>
 <ul>
   <li><b>No backend, no secrets.</b> The deploy uses only the short-lived, job-scoped <code>GITHUB_TOKEN</code> with least-privilege permissions per workflow (<code>pages: write, id-token: write</code> for deploy; <code>contents: write</code> only for screenshots; <code>actions: write</code> only for keepalive).</li>
   <li><b>Untrusted inputs.</b> Share links and third-party data are treated as data: decoded JSON is type-checked, sanitised, capped at 40 holdings and rendered through React (escaped); WebSocket frames are parsed defensively. There is no <code>dangerouslySetInnerHTML</code>.</li>
@@ -262,17 +282,17 @@ const tradeoffs = () => {
     ],
     [
       'ETL model',
-      'Stateless full refresh each run',
-      'Incremental updates with a state store (cache/branch/DB)',
-      'Idempotent and self-healing; dividend re-adjustments handled implicitly; trivial to reason about.',
-      '~100 full-history requests per run; more upstream load than deltas.',
+      'Append-only deltas against the deployed site, plus a weekly full refresh',
+      'Full refetch every run, or a state store (cache/branch/DB)',
+      'One NAVAll request instead of ~30 history downloads per run; the CDN is the state store, so still no database; the weekly refresh heals revisions.',
+      'Two code paths to test; a correction to an old NAV waits up to a week.',
     ],
     [
       'Market data',
-      'Yahoo v8 (keyless) + FRED',
-      'Alpha Vantage, Polygon, Tiingo, EODHD (keys, quotas or cost)',
-      'Free, deep history, covers NSE and US with adjusted closes.',
-      'Unofficial and rate-limited; terms of use; mitigated by fallbacks and a gate, but a paid vendor is the production answer.',
+      'Only sources that permit automated access and republication: AMFI NAVs, FRED public-domain series, ECB, Binance public data, Fama–French',
+      'Yahoo Finance (blocks cloud IPs with 429s; terms forbid automation); FRED’s S&amp;P/Nasdaq series (“pre-approval required”); keyed vendors (quotas, no-redistribution clauses)',
+      'Legally clean and reliable from CI; Indian funds are exactly what a beginner can buy; NAVs are total return.',
+      'No individual stocks; US equity comes via fund NAVs and academic data; Treasuries are modelled; NAVs are end-of-day.',
     ],
     [
       'Numerics language',
@@ -466,7 +486,7 @@ C    = { w : lᵢ ≤ wᵢ ≤ uᵢ,  Σwᵢ = 1 } ∩ { asset-class bounds }</p
 
 const QUALITY = `
 <h1 class="section" id="s5"><span class="num">5</span>Quality strategy: how the maths is proven right</h1>
-<figure>${pyramidSvg}<figcaption>Figure 3 — 113 automated checks plus a live smoke test after every deployment.</figcaption></figure>
+<figure>${pyramidSvg}<figcaption>Figure 3 — 123 automated checks plus a live smoke test after every deployment.</figcaption></figure>
 <h2>5.1 Golden tests</h2>
 <p><code>tools/reference/generate_fixtures.py</code> draws daily returns from a seeded two-factor model (600 days × 8 assets) and computes reference results with independent, widely used libraries. The fixture stores the <i>inputs too</i>, so the TypeScript tests consume byte-identical data.</p>
 <table>
@@ -490,7 +510,7 @@ const QUALITY = `
 </div>
 <h2>5.3 Pipeline &amp; front-end tests</h2>
 <ul>
-  <li>Parsers run on a recorded-shape Yahoo response with nulls, duplicate bars and IST timestamps; FRED's “.” missing values; the history codec round-trip; universe integrity (unique, file-safe IDs; valid benchmarks and proxies); the concurrency limiter; and an end-to-end offline pipeline run through the validation gate.</li>
+  <li>Every adapter's parser runs on recorded-format fixtures — mfapi JSON with duplicates and “N.A.”, NAVAll in both column layouts, Binance klines, ECB rates, FRED's “.” and empty missing values, and a ZIP built in the test for the Fama–French reader; the unit-split detector, chain-link splicing and USD conversion; the Treasury model (zero yield change earns exactly the coupon; +10 bp costs ≈ duration × 10 bp); the history codec round-trip; universe integrity (unique, file-safe IDs; valid benchmarks and proxies); the concurrency limiter; and an end-to-end offline pipeline run through the validation gate.</li>
   <li>Playwright drives the production build: every route on desktop and a Pixel 7 profile with console-error assertions; the full questionnaire → adopt journey; the asset picker; the optimiser; the command palette; theme switching; share-link import.</li>
   <li><b>Accessibility by construction</b>: categorical palette validated for adjacent-pair CVD separation (OKLab ΔE ≥ 8) and contrast in both themes; text tokens ≥ 4.5:1 (WCAG AA); signal and status colours always paired with an icon and a label; every chart has a keyboard crosshair and a table view.</li>
 </ul>`;

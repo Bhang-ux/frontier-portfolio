@@ -6,6 +6,9 @@ name: README screenshots
 on:
   schedule:
     - cron: '23 3 1 * *'
+  push:
+    branches: [main]
+    paths: ['tools/screenshots.mjs', '.github/workflows/screenshots.yml']
   workflow_dispatch:
 
 permissions:

@@ -28,12 +28,12 @@ Frontier gives a complete beginner the toolkit of a quant desk — and tells the
 
 |                        |                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🧭 **Get started**     | 7 questions → a risk profile that separates _tolerance_ from _capacity_ (with safety caps) → a forecast-free model portfolio of low-cost ETFs (India ₹ or US $), a Monte Carlo projection of _your_ SIP, and “what could go wrong” in real money.                                                                                                                                                                                     |
+| 🧭 **Get started**     | 7 questions → a risk profile that separates _tolerance_ from _capacity_ (with safety caps) → a forecast-free model portfolio of real, low-cost index funds (India ₹ or US $), a Monte Carlo projection of _your_ SIP, and “what could go wrong” in real money.                                                                                                                                                                        |
 | 📊 **My portfolio**    | Health score (A–F) with concrete fixes · annual return, volatility, Sharpe, drawdowns, VaR/CVaR, beta, effective number of bets — each with a one-sentence explanation · money-vs-risk decomposition · HRP-ordered correlation heatmap · return distribution with fat-tail check · rolling statistics · monthly-returns calendar · historical crisis replays (GFC → 2025 tariff shock) · what-if shocks · multi-factor exposures.     |
 | 🎯 **Optimizer**       | Max Sharpe, min variance, risk parity, HRP, max diversification, min CVaR, target return/risk, equal weight · per-asset & asset-class guard-rails · Ledoit–Wolf / EWMA / RMT-denoised risk models · Bayes–Stein, CAPM, EWMA or equilibrium returns · **Black–Litterman views** · interactive efficient frontier (click to pick a portfolio) · reasons for every change · executable trade list · **walk-forward out-of-sample test**. |
 | 🔮 **Future planner**  | Monte Carlo with history bootstrap (stationary block), normal or fat-tailed returns; SIP step-ups, fees, inflation (real vs nominal), retirement withdrawals; probability of reaching your goal, of loss, of running out.                                                                                                                                                                                                             |
 | 🧪 **Strategy lab**    | Rebalancing rules compared after costs; a walk-forward tournament of allocation methods on your own holdings.                                                                                                                                                                                                                                                                                                                         |
-| 🌍 **Today & Markets** | Plain-English market briefing, live crypto stream, HMM market regimes (calm vs turbulent), a transparent Market Mood gauge, breadth, a market map, cross-asset scoreboard and a 100-instrument screener with trend & momentum scores.                                                                                                                                                                                                 |
+| 🌍 **Today & Markets** | Plain-English market briefing, live crypto & gold stream, HMM market regimes (calm vs turbulent), a transparent Market Mood gauge, breadth, an India-first market map (size, sectors, strategies), cross-asset scoreboard and a 45-instrument screener with trend & momentum scores.                                                                                                                                                  |
 
 Every chart is accessible (keyboard crosshair, table view, colour-blind-safe validated palette) and works in light and dark themes, on desktop and mobile. **Beginner / Pro** mode switches between explanations and density.
 
@@ -51,7 +51,7 @@ Every chart is accessible (keyboard crosshair, table view, colour-blind-safe val
 ```mermaid
 flowchart LR
   subgraph GH["GitHub Actions (cron: hourly weekdays, 4-hourly weekends)"]
-    A[Acquire<br/>Yahoo v8 · FRED<br/>retries, crumb fallback] --> B[Clean<br/>dedupe · spike filter<br/>exchange-local dates]
+    A[Acquire<br/>AMFI · FRED · ECB · Binance · Fama–French<br/>NAVAll delta check · backoff] --> B[Clean & derive<br/>split repair · spike filter<br/>chain-link splices · bond model]
     B --> C[Analyse with @frontier/quant<br/>stats · signals · HMM regimes<br/>mood · model portfolios]
     C --> D{Validation gate<br/>zod schema · coverage<br/>freshness · sanity}
     D -- pass --> E[Publish static JSON<br/>content-hashed]
@@ -65,10 +65,25 @@ flowchart LR
   G -. WebSocket .-> L[Binance public stream<br/>live crypto]
 ```
 
-- **Stateless ETL, static API.** Each scheduled run rebuilds the entire dataset from source, so there is no database to corrupt or migrate. Output is JSON on the same CDN as the app; the browser polls a ~9 KB manifest and only downloads files whose content hash changed.
+- **Incremental ETL, static API — and the CDN is the database.** Each run reads AMFI's one-file NAV list and appends today's NAV to every fund history already on the live site (full histories are refetched only when a NAV could have been missed, and weekly). Output is JSON on the same CDN as the app; the browser polls a ~4 KB manifest and only downloads files whose content hash changed.
 - **One quant engine, two runtimes.** `packages/quant` is pure TypeScript with zero runtime dependencies. The pipeline (Node) and the app (Web Worker) run _the same code_, so a number on the dashboard can never disagree with the analysis page.
 - **Your data stays yours.** Portfolios live in `localStorage`; sharing encodes a portfolio into the URL hash. No accounts, no tracking, no backend.
 - **Fails safe.** Upstream flake → previous copy of that instrument; schema/freshness failure → no deploy; site → still the last good build.
+
+### Data sources — only those that permit automated use
+
+The first live run taught the most important lesson of the project: **Yahoo Finance returned HTTP 429 for every symbol from GitHub's servers, and its terms prohibit automated access.** The validation gate correctly refused to publish, and instead of disguising the client as a browser, Frontier identifies itself honestly and uses only sources that allow programmatic access and republication. FRED's S&P 500, Dow and Nasdaq series are tagged _"Copyrighted: Pre-Approval Required"_, so they are not republished either.
+
+| Source                                                                                     | Used for                                                                                                                                                                  | Cadence             |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| [AMFI](https://www.amfiindia.com/) NAVAll + [mfapi.in](https://www.mfapi.in/)              | 26 Indian Direct–Growth funds: Nifty 50 / Next 50 / 500, mid & small caps, 9 sectors, 5 smart-beta strategies, S&P 500 & Nasdaq-100 (₹), gold, silver, gilts, bonds, cash | daily (evening IST) |
+| [FRED](https://fred.stlouisfed.org/) (public domain)                                       | Treasury yields → modelled 2/10/30-year total-return indices, T-bills, USD/INR history, broad dollar index, Brent                                                         | daily               |
+| FRED · CBOE (citation)                                                                     | VIX                                                                                                                                                                       | daily               |
+| [ECB](https://www.ecb.europa.eu/) via [Frankfurter](https://frankfurter.dev/)              | latest USD/INR (FRED's H.10 series lags a week)                                                                                                                           | daily               |
+| [Binance public data](https://data-api.binance.vision)                                     | Bitcoin, Ethereum, Solana, PAX Gold (dollar gold) — daily, 5-minute and live WebSocket                                                                                    | continuous          |
+| [Kenneth R. French Data Library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/) | US market history before the S&P 500 fund launched (2020); size, value and momentum factors                                                                               | monthly             |
+
+Techniques this forced: **chain-linked backfills** (Regular-plan NAVs before 2013, Fama–French returns before 2020), **constant-maturity Treasury indices modelled from public yields** (carry + exact repricing), **USD views of INR funds** (NAV ÷ USD/INR, rebased), **unit-split repair** for re-denominated ETF NAVs, and a **realised-volatility mood component** for India (India VIX is licensed). Every asset page states where its numbers come from.
 
 ### The quant engine (`packages/quant`)
 
@@ -106,7 +121,7 @@ npm run data:synthetic   # offline demo dataset (clearly flagged in the UI)
 npm run dev              # http://localhost:5173/frontier-portfolio/
 ```
 
-With internet access, `npm run data` fetches **live** data instead.
+With internet access, `npm run data` fetches **live** data instead (`--full-refresh` refetches every history; `node tools/data-report.mjs` prints a per-instrument coverage report).
 
 ```bash
 npm run verify           # typecheck + lint + all unit/golden/pipeline tests
@@ -123,14 +138,14 @@ packages/contracts   typed data contracts + history codec shared by pipeline & w
 pipeline             scheduled ETL: sources, analytics, validation, publishing
 web                  React 19 + Vite 7 + Tailwind 4 app, Web Worker, charts
 e2e                  Playwright journeys (desktop + mobile)
-tools                Python reference generator, screenshot tool
-.github/workflows    CI · data refresh & deploy · CodeQL · screenshots · keepalive
+tools                Python reference generator, screenshot tool, source probe, data report
+.github/workflows    CI · data refresh & deploy · CodeQL · screenshots · keepalive · pipeline dry run
 docs                 interview guide (PDF + generator), screenshots
 ```
 
 ## Testing
 
-- **87 unit & golden tests** (Vitest): numerical kernels, every optimiser objective vs CVXPY, Ledoit–Wolf vs scikit-learn, HRP & Black–Litterman vs PyPortfolioOpt, Monte Carlo vs closed forms, HMM regime recovery, parsers with recorded API fixtures, the validation gate, the risk questionnaire.
+- **97 unit & golden tests** (Vitest): numerical kernels, every optimiser objective vs CVXPY, Ledoit–Wolf vs scikit-learn, HRP & Black–Litterman vs PyPortfolioOpt, Monte Carlo vs closed forms, HMM regime recovery, every source adapter on recorded-format fixtures (AMFI, NAVAll, FRED, ECB, Binance, a ZIP built in-test for Fama–French), unit-split repair, chain-link splicing, the Treasury model against duration, the validation gate, the risk questionnaire.
 - **26 end-to-end tests** (Playwright, desktop + mobile): every route, the full beginner journey, optimiser, command palette, theme, share links.
 - **Live smoke test** after each deploy: the CDN serves the manifest just built and deep links return 200.
 
