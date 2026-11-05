@@ -36,6 +36,7 @@ jobs:
       - name: Coverage summary
         if: always()
         run: |
+          [ -f coverage/coverage-summary.json ] || { echo 'No coverage summary (tests failed early).'; exit 0; }
           node -e "const s=require('./coverage/coverage-summary.json').total; const row=k=>'| '+k+' | '+s[k].pct+'% |'; console.log(['### Test coverage','| Metric | % |','|---|---|',row('lines'),row('statements'),row('functions'),row('branches')].join('\n'))" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         if: always()

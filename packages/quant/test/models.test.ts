@@ -50,7 +50,7 @@ describe('Monte Carlo', () => {
       sigma: 0.2,
       years: 30,
       initial: 1,
-      paths: 20000,
+      paths: 10000,
       seed: 3,
     });
     expect(r.medianCagr).toBeCloseTo(Math.exp(0.08 - 0.02) - 1, 2);

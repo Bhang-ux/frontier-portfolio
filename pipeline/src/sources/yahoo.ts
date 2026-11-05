@@ -9,7 +9,7 @@
  *  - validates and cleans every response (nulls, duplicates, bad prints).
  */
 import { epochDayFromUnix } from '@frontier/quant';
-import { BROWSER_UA, fetchWithRetry, HttpError } from './http';
+import { USER_AGENT, fetchWithRetry, HttpError } from './http';
 
 export interface DailyBars {
   symbol: string;
@@ -164,7 +164,7 @@ class Session {
     if (this.crumb) return;
     this.pending ??= (async () => {
       const r1 = await fetch('https://fc.yahoo.com/', {
-        headers: { 'User-Agent': BROWSER_UA },
+        headers: { 'User-Agent': USER_AGENT },
         redirect: 'manual',
       }).catch(() => null);
       const setCookie = r1?.headers.getSetCookie?.() ?? [];
