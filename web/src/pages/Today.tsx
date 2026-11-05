@@ -12,7 +12,18 @@ import { ChartCard, Columns, DivergingLegend, MoodGauge, Sparkline } from '@/com
 import { TimeSeriesChart } from '@/components/charts/TimeSeriesChart';
 import { diverging, inkOn, useSize, useTheme } from '@/components/charts/core';
 
-const TICKER = ['GSPC', 'IXIC', 'NSEI', 'BSESN', 'BTC-USD', 'ETH-USD', 'GC', 'USDINR', 'VIX', 'TNX'];
+const TICKER = [
+  'NIFTY50',
+  'SMALLCAP250',
+  'US-LARGE',
+  'BTC-USD',
+  'ETH-USD',
+  'GOLD-USD',
+  'USDINR',
+  'VIX',
+  'US10Y',
+  'BRENT',
+];
 
 function useLiveAsset(a: AssetSnapshot | undefined) {
   const live = useLiveTicks();
@@ -126,10 +137,12 @@ function MarketCard({ m, assets }: { m: MarketSummary; assets: Map<string, Asset
               </span>
             </li>
           ))}
-          <li className="pt-1 text-xs text-ink-3">
-            Breadth: {m.breadth.advancers} up · {m.breadth.decliners} down · {m.breadth.aboveSma200}/
-            {m.breadth.total} above their 200-day average
-          </li>
+          {m.breadth.total >= 5 && (
+            <li className="pt-1 text-xs text-ink-3">
+              Breadth: {m.breadth.advancers} up · {m.breadth.decliners} down · {m.breadth.aboveSma200}/
+              {m.breadth.total} funds above their 200-day average
+            </li>
+          )}
         </ul>
       </div>
     </Card>
@@ -144,37 +157,57 @@ const PERIODS: { value: Period; label: string }[] = [
   { value: 'y1', label: '1Y' },
 ];
 
+const IN_GROUPS = ['Size', 'Sectors & themes', 'Strategies', 'Global (₹)'];
+const ALL_GROUPS = ['Indian & global funds (₹)', 'US stocks', 'Bonds', 'Gold & silver', 'Crypto'];
+
+function mapGroup(a: AssetSnapshot, scope: 'IN' | 'ALL'): string | null {
+  const m = a.meta;
+  if (!m.investable || m.kind === 'cash') return null;
+  if (scope === 'IN') {
+    if (m.assetClass !== 'equity' || m.currency !== 'INR') return null;
+    return m.tags?.includes('size')
+      ? 'Size'
+      : m.tags?.includes('strategy')
+        ? 'Strategies'
+        : m.tags?.includes('sector')
+          ? 'Sectors & themes'
+          : 'Global (₹)';
+  }
+  if (m.assetClass === 'equity') return m.currency === 'INR' ? 'Indian & global funds (₹)' : 'US stocks';
+  if (m.assetClass === 'bond') return 'Bonds';
+  if (m.assetClass === 'commodity') return 'Gold & silver';
+  if (m.assetClass === 'crypto') return 'Crypto';
+  return null;
+}
+
 function MarketMap({ assets }: { assets: AssetSnapshot[] }) {
   const theme = useTheme();
   const [period, setPeriod] = useState<Period>('d1');
-  const [region, setRegion] = useState<'US' | 'IN'>('US');
+  const [scope, setScope] = useState<'IN' | 'ALL'>('IN');
   const groups = useMemo(() => {
-    const list = assets.filter(
-      (a) => a.meta.region === region && (a.meta.kind === 'stock' || a.meta.tags?.includes('sector')),
-    );
     const by = new Map<string, AssetSnapshot[]>();
-    for (const a of list) {
-      const k = a.meta.tags?.includes('sector') ? 'Sector funds' : (a.meta.sector ?? 'Other');
-      by.set(k, [...(by.get(k) ?? []), a]);
+    for (const a of assets) {
+      const k = mapGroup(a, scope);
+      if (k) by.set(k, [...(by.get(k) ?? []), a]);
     }
-    return [...by.entries()].sort((a, b) => b[1].length - a[1].length);
-  }, [assets, region]);
+    const order = scope === 'IN' ? IN_GROUPS : ALL_GROUPS;
+    return [...by.entries()].sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]));
+  }, [assets, scope]);
   const scale = period === 'd1' ? 0.03 : period === 'm1' ? 0.1 : 0.3;
-  const all = groups.flatMap(([, g]) => g);
   return (
     <ChartCard
       title="Market map"
-      subtitle="Every tile is a company or sector fund, coloured by its return. Blue = up, red = down."
+      subtitle="Every tile is a fund you can buy, coloured by its return. Blue = up, red = down."
       right={
         <div className="flex flex-wrap gap-2">
           <Segmented
             size="sm"
-            label="Map region"
-            value={region}
-            onChange={setRegion}
+            label="Map scope"
+            value={scope}
+            onChange={setScope}
             options={[
-              { value: 'US', label: 'US' },
               { value: 'IN', label: 'India' },
+              { value: 'ALL', label: 'All assets' },
             ]}
           />
           <Segmented size="sm" label="Map period" value={period} onChange={setPeriod} options={PERIODS} />
@@ -182,7 +215,9 @@ function MarketMap({ assets }: { assets: AssetSnapshot[] }) {
       }
       table={{
         columns: ['Asset', 'Group', 'Return'],
-        rows: all.map((a) => [a.meta.short, a.meta.sector ?? '', signedPct(a.stats.returns[period])]),
+        rows: groups.flatMap(([g, list]) =>
+          list.map((a) => [a.meta.short, g, signedPct(a.stats.returns[period])]),
+        ),
       }}
       footer={<DivergingLegend min={signedPct(-scale, 0)} max={signedPct(scale, 0)} label="Colour scale" />}
     >
@@ -203,9 +238,7 @@ function MarketMap({ assets }: { assets: AssetSnapshot[] }) {
                     style={{ background: fill, color: ink }}
                     title={`${a.meta.name}: ${signedPct(v)}`}
                   >
-                    <div className="truncate text-[12px] font-semibold">
-                      {a.meta.symbol.replace('.NS', '')}
-                    </div>
+                    <div className="truncate text-[12px] font-semibold">{a.meta.short}</div>
                     <div className="num text-[12px] opacity-90">{signedPct(v)}</div>
                   </Link>
                 );
@@ -219,16 +252,16 @@ function MarketMap({ assets }: { assets: AssetSnapshot[] }) {
 }
 
 const SCOREBOARD = [
-  ['SPY', 'US', 'US stocks'],
-  ['VEA', 'Intl', 'International stocks'],
-  ['VWO', 'EM', 'Emerging markets'],
-  ['NIFTYBEES.NS', 'India', 'Indian stocks'],
-  ['AGG', 'Bonds', 'US bonds'],
-  ['TLT', 'Long', 'Long Treasuries'],
-  ['GLD', 'Gold', 'Gold'],
-  ['VNQ', 'REIT', 'Real estate'],
+  ['NIFTY50', 'India', 'Indian stocks'],
+  ['SMALLCAP250', 'Small', 'Indian small caps'],
+  ['US-LARGE', 'US', 'US stocks'],
+  ['US-TECH', 'Tech', 'US tech'],
+  ['GILT10Y', 'G-Sec', 'Indian government bonds'],
+  ['UST10Y', 'UST', 'US Treasuries'],
+  ['GOLD-INR', 'Gold', 'Gold (₹)'],
+  ['SILVER-INR', 'Silver', 'Silver (₹)'],
   ['BTC-USD', 'BTC', 'Bitcoin'],
-  ['CASH-USD', 'Cash', 'Cash'],
+  ['CASH-INR', 'Cash', 'Cash (₹)'],
 ] as const;
 
 function Scoreboard({ assets }: { assets: Map<string, AssetSnapshot> }) {

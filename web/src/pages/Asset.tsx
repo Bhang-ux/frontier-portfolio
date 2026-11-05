@@ -30,6 +30,19 @@ import {
   Switch,
   cx,
 } from '@/components/ui/primitives';
+
+const SOURCE_NAMES: Record<AssetSnapshot['source'], string> = {
+  amfi: 'AMFI',
+  fred: 'FRED',
+  binance: 'Binance',
+  ecb: 'European Central Bank',
+  french: 'Kenneth R. French Data Library',
+  model: 'Modelled from FRED yields',
+  derived: 'Derived',
+  'previous-deploy': 'Previous deploy',
+  constructed: 'Constructed',
+  synthetic: 'Synthetic demo data',
+};
 import { DataState, SignalBadge, WatchStar } from '@/components/domain/common';
 
 const RANGES = [
@@ -353,11 +366,30 @@ function AssetView({ a }: { a: AssetSnapshot }) {
           </div>
         </>
       )}
-      <p className="mt-6 text-xs text-ink-3">
-        Source: {a.source === 'yahoo' ? 'Yahoo Finance' : a.source}. History {a.history.start} →{' '}
-        {a.history.end} ({a.history.points.toLocaleString()} observations). Statistics use dividend-adjusted
-        prices.
-      </p>
+      <div className="mt-6 space-y-1 text-xs text-ink-3">
+        <p>
+          <span className="font-medium text-ink-2">
+            Data: {a.meta.provenance?.provider ?? SOURCE_NAMES[a.source]}
+          </span>
+          {a.source === 'previous-deploy' &&
+            ' (the source was unavailable at the last refresh — showing the previous copy)'}
+          . {a.meta.provenance?.detail}{' '}
+          {a.meta.provenance?.url && (
+            <a
+              className="underline decoration-dotted underline-offset-2 hover:text-ink"
+              href={a.meta.provenance.url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Source
+            </a>
+          )}
+        </p>
+        <p>
+          History {a.history.start} → {a.history.end} ({a.history.points.toLocaleString()} observations).
+          Returns include dividends and interest wherever the source does (fund NAVs and modelled indices do).
+        </p>
+      </div>
     </div>
   );
 }

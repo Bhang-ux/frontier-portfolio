@@ -6,7 +6,7 @@ import type { AssetSnapshot, Currency } from '@frontier/contracts';
 import { rebalancePlan, type Objective, type StrategySpec, type View } from '@frontier/quant';
 import { useMarketData, type MarketData } from '@/lib/data';
 import { useDebounced } from '@/lib/hooks';
-import { assetInfo, normalized, useSeriesInputs } from '@/lib/portfolio';
+import { BENCHMARK, assetInfo, normalized, useSeriesInputs } from '@/lib/portfolio';
 import { usePortfolios, useSettings, type ReturnModel } from '@/lib/store';
 import { useOptimization, useWalkForward } from '@/lib/worker';
 import { money, number, pct, seriesColor, signedPct } from '@/lib/format';
@@ -118,7 +118,7 @@ function OptimizeView({ data }: { data: MarketData }) {
   const [runWF, setRunWF] = useState(false);
 
   const ids = useMemo(() => universe.filter((id) => data.assets.has(id)), [universe, data.assets]);
-  const marketId = base === 'INR' ? 'NIFTYBEES.NS' : 'SPY';
+  const marketId = BENCHMARK[base].id;
   const inputs = useSeriesInputs(
     useMemo(() => [...ids, marketId], [ids, marketId]),
     data.assets,
@@ -550,7 +550,7 @@ function OptimizeView({ data }: { data: MarketData }) {
                   cloud={res.cloud}
                   assets={res.assets.map((a) => ({
                     ...a,
-                    label: data.assets.get(a.id)!.meta.symbol.replace('.NS', ''),
+                    label: data.assets.get(a.id)!.meta.symbol,
                   }))}
                   specials={res.specials.map((s) => ({ key: s.key, label: s.label, vol: s.vol, ret: s.ret }))}
                   current={res.current ? { vol: res.current.vol, ret: res.current.ret } : undefined}

@@ -21,7 +21,7 @@ const TERMS: Term[] = [
     short: 'One purchase that owns hundreds of companies at once, for a tiny yearly fee.',
     analogy: 'Instead of betting on one horse, you own a slice of the whole race.',
     detail:
-      'Exchange-traded funds track an index (e.g. the Nifty 50 or S&P 500) and trade like shares. Low cost and broad diversification make them the best building blocks for most investors.',
+      'Index funds (and their exchange-traded cousins, ETFs) simply copy an index such as the Nifty 50 or S&P 500. Low cost and broad diversification make them the best building blocks for most investors. In India, choose the “Direct” plan: same fund, lower fee.',
   },
   {
     term: 'Diversification',
@@ -120,7 +120,7 @@ const TERMS: Term[] = [
     tag: 'Risk',
     short: 'Which broad forces (market, size, value, rates…) actually drive your returns.',
     detail:
-      'A regression of your portfolio on factor returns. Frontier builds factors from liquid ETF spreads (e.g. small caps minus large caps) so they refresh daily.',
+      'A regression of your portfolio on factor returns. Indian factors are spreads between smart-beta index funds and the Nifty 50 (e.g. Smallcap 250 minus Nifty 50), refreshed daily; US style factors are the academic Fama–French series.',
   },
   {
     term: 'Efficient frontier',
@@ -313,9 +313,10 @@ export default function LearnPage() {
           />
           <div className="grid gap-3 sm:grid-cols-2">
             <Arch icon={<GitBranch size={15} className="text-accent" />} title="1 · Scheduled pipeline">
-              GitHub Actions runs a TypeScript ETL on a cron schedule: it downloads ~100 instruments from
-              Yahoo Finance and FRED, cleans them, and computes statistics, signals, regimes and model
-              portfolios.
+              GitHub Actions runs a TypeScript ETL on a cron schedule. It reads fund NAVs from AMFI, rates and
+              FX from FRED and the ECB, crypto from Binance and factor data from the Fama–French library —
+              only sources that allow automated use — then cleans them and computes statistics, signals,
+              regimes and model portfolios.
             </Arch>
             <Arch icon={<ShieldCheck size={15} className="text-accent" />} title="2 · Validation gate">
               A schema and freshness check must pass before anything is published. If an upstream source

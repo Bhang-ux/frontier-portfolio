@@ -16,7 +16,12 @@ export interface LiveTick {
   ts: number;
 }
 
-const STREAMS: Record<string, string> = { 'BTC-USD': 'btcusdt', 'ETH-USD': 'ethusdt', 'SOL-USD': 'solusdt' };
+const STREAMS: Record<string, string> = {
+  'BTC-USD': 'btcusdt',
+  'ETH-USD': 'ethusdt',
+  'SOL-USD': 'solusdt',
+  'GOLD-USD': 'paxgusdt',
+};
 const HOSTS = ['wss://data-stream.binance.vision/stream', 'wss://stream.binance.com:9443/stream'];
 
 type Status = 'idle' | 'connecting' | 'live' | 'offline';

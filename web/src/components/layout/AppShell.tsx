@@ -269,7 +269,7 @@ function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (
         <Search size={16} className="text-ink-3" />
         <Command.Input
           autoFocus
-          placeholder="Search 100+ assets, pages and actions…"
+          placeholder="Search funds, assets, pages and actions…"
           className="h-12 w-full bg-transparent text-[15px] text-ink outline-none placeholder:text-ink-3"
         />
       </div>
@@ -399,8 +399,8 @@ export function AppShell({ children }: { children?: ReactNode }) {
         <footer className="mx-auto mb-20 w-full max-w-[1440px] px-4 text-[12px] text-ink-3 sm:px-6 lg:mb-6">
           <div className="flex flex-col gap-1 border-t border-line pt-4 sm:flex-row sm:justify-between">
             <span>
-              Frontier is an educational tool, not investment advice. Data: Yahoo Finance, FRED, Binance
-              (crypto live). Prices may be delayed.
+              Frontier is an educational tool, not investment advice. Data: AMFI (fund NAVs), FRED, ECB,
+              Binance (crypto, live), Kenneth R. French Data Library. NAVs are end-of-day.
             </span>
             <span>Computed entirely in your browser · no account · no tracking</span>
           </div>

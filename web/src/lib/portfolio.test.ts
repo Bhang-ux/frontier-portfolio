@@ -8,8 +8,8 @@ const p: Portfolio = {
   currency: 'INR',
   amount: 123456,
   holdings: [
-    { id: 'NIFTYBEES.NS', weight: 0.6 },
-    { id: 'GOLDBEES.NS', weight: 0.4 },
+    { id: 'NIFTY50', weight: 0.6 },
+    { id: 'GOLD-INR', weight: 0.4 },
   ],
   origin: 'custom',
   createdAt: 0,

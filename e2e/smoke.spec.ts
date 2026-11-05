@@ -18,7 +18,7 @@ const ROUTES: [string, RegExp][] = [
   ['simulate', /possible/],
   ['backtest', /real history/],
   ['markets', /Every asset/],
-  ['asset/SPY', /SPDR S&P 500 ETF/],
+  ['asset/NIFTY50', /UTI Nifty 50 Index Fund/],
   ['learn', /explained/],
 ];
 

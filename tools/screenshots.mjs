@@ -29,7 +29,7 @@ const shots = [
   { name: 'portfolio', path: 'portfolio', theme: 'dark' },
   { name: 'optimizer', path: 'optimize', theme: 'dark' },
   { name: 'planner', path: 'simulate', theme: 'dark' },
-  { name: 'asset', path: 'asset/NIFTYBEES.NS', theme: 'dark' },
+  { name: 'asset', path: 'asset/NIFTY50', theme: 'dark' },
   { name: 'portfolio-light', path: 'portfolio', theme: 'light' },
 ];
 

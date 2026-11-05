@@ -11,16 +11,16 @@ import { Card, PageHeader, Segmented, Switch, cx } from '@/components/ui/primiti
 import { AssetName, DataState, SignalBadge, WatchStar } from '@/components/domain/common';
 
 type SortKey = 'name' | 'd1' | 'm1' | 'ytd' | 'y1' | 'y5' | 'vol' | 'sharpe' | 'score';
-type ClassFilter = 'all' | 'stocks' | 'funds' | 'bonds' | 'commodities' | 'crypto' | 'reference';
+type ClassFilter = 'all' | 'india' | 'global' | 'bonds' | 'commodities' | 'crypto' | 'reference';
 
 const classMatch = (a: AssetSnapshot, f: ClassFilter) => {
   switch (f) {
     case 'all':
       return true;
-    case 'stocks':
-      return a.meta.kind === 'stock';
-    case 'funds':
-      return a.meta.kind === 'etf' && a.meta.assetClass === 'equity';
+    case 'india':
+      return a.meta.investable && a.meta.assetClass === 'equity' && a.meta.region === 'IN';
+    case 'global':
+      return a.meta.investable && a.meta.assetClass === 'equity' && a.meta.region !== 'IN';
     case 'bonds':
       return a.meta.assetClass === 'bond' || a.meta.assetClass === 'cash';
     case 'commodities':
@@ -140,10 +140,10 @@ export default function MarketsPage() {
             aria-label="Asset type"
           >
             <option value="all">All types</option>
-            <option value="stocks">Stocks</option>
-            <option value="funds">Stock funds (ETFs)</option>
+            <option value="india">Indian stock funds</option>
+            <option value="global">US & global stocks</option>
             <option value="bonds">Bonds & cash</option>
-            <option value="commodities">Commodities & real estate</option>
+            <option value="commodities">Gold, silver & oil</option>
             <option value="crypto">Crypto</option>
             <option value="reference">Indices, rates & FX</option>
           </select>

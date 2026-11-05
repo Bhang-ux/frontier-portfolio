@@ -246,7 +246,7 @@ function Advisor({ data }: { data: MarketData }) {
     },
     {
       title: 'Where do you want to invest?',
-      sub: 'Frontier builds portfolios from low-cost index ETFs on the exchange you choose.',
+      sub: 'Frontier builds portfolios from low-cost index funds in the currency you choose.',
       body: (
         <div className="grid gap-2.5 sm:grid-cols-2">
           <Choice
@@ -258,7 +258,7 @@ function Advisor({ data }: { data: MarketData }) {
                 monthly: a.market === 'IN' ? a.monthly : 10_000,
               })
             }
-            hint="NSE-listed ETFs, in rupees — Nifty 50, gold, gilts, US tech"
+            hint="Indian mutual funds, in rupees — Nifty 50, Next 50, S&P 500, gold, gilts"
             icon={<span className="text-lg font-bold">₹</span>}
           >
             India
@@ -272,7 +272,7 @@ function Advisor({ data }: { data: MarketData }) {
                 monthly: a.market === 'US' ? a.monthly : 500,
               })
             }
-            hint="US-listed ETFs, in dollars — S&P 500, global stocks, bonds, gold"
+            hint="In dollars — US large caps, tech, Treasuries, gold"
             icon={<span className="text-lg font-bold">$</span>}
           >
             United States
@@ -584,9 +584,7 @@ function Recommendation({
                       <div className="flex items-baseline justify-between gap-2">
                         <span className="truncate text-[14px] font-semibold">
                           {meta?.short ?? h.id}{' '}
-                          <span className="font-mono text-[11px] font-normal text-ink-3">
-                            {meta?.symbol.replace('.NS', '')}
-                          </span>
+                          <span className="font-mono text-[11px] font-normal text-ink-3">{meta?.symbol}</span>
                         </span>
                         <span className="num shrink-0 text-[14px] font-semibold">{pct(h.weight, 0)}</span>
                       </div>
@@ -707,11 +705,14 @@ function Recommendation({
               <li>
                 Open a{' '}
                 {answers.market === 'IN'
-                  ? 'demat + trading account with any SEBI-registered broker'
-                  : 'brokerage account that offers US ETFs'}
+                  ? 'mutual-fund account (any SEBI-registered platform, or the fund house directly) and choose Direct plans'
+                  : 'brokerage account that offers low-cost index funds or ETFs'}
                 .
               </li>
-              <li>Buy the ETFs above in roughly these proportions — exact percentages don’t matter much.</li>
+              <li>
+                Buy funds like the ones above in roughly these proportions — any low-cost fund tracking the
+                same index works, and exact percentages don’t matter much.
+              </li>
               <li>
                 Set up an automatic monthly investment ({answers.market === 'IN' ? 'a SIP' : 'recurring buy'})
                 of {money(answers.monthly, cur, 0)}.

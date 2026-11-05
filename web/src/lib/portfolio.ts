@@ -12,46 +12,53 @@ import type { Holding, Portfolio } from './store';
 import type { AssetInfo, FactorDef, SeriesInput } from '../workers/quant.worker';
 
 export const BENCHMARK: Record<Currency, { id: string; name: string }> = {
-  INR: { id: 'NIFTYBEES.NS', name: 'Nifty 50' },
-  USD: { id: 'SPY', name: 'S&P 500' },
+  INR: { id: 'NIFTY50', name: 'Nifty 50' },
+  USD: { id: 'US-LARGE', name: 'US large caps' },
 };
 
+/**
+ * Factor definitions per base currency. Indian factors are spreads between
+ * smart-beta index funds and the Nifty 50, so they update daily; US style
+ * factors are the academic Fama–French series (they lag by a few weeks, so
+ * the regression window ends at their last print).
+ */
 export const FACTORS: Record<Currency, FactorDef[]> = {
   USD: [
-    { key: 'mkt', label: 'Stock market (S&P 500)', long: 'SPY', excess: true },
-    { key: 'size', label: 'Small vs large companies', long: 'IWM', short: 'SPY' },
-    { key: 'value', label: 'Value vs growth', long: 'IWD', short: 'IWF' },
-    { key: 'mom', label: 'Momentum', long: 'MTUM', short: 'SPY' },
-    { key: 'rates', label: 'Interest-rate sensitivity', long: 'IEF', short: 'SHY' },
-    { key: 'gold', label: 'Gold', long: 'GLD' },
-    { key: 'usd', label: 'US dollar', long: 'UUP' },
+    { key: 'mkt', label: 'US stock market', long: 'US-LARGE', excess: true },
+    { key: 'size', label: 'Small vs large companies', long: 'FF-SMB' },
+    { key: 'value', label: 'Value vs growth', long: 'FF-HML' },
+    { key: 'mom', label: 'Momentum', long: 'FF-MOM' },
+    { key: 'rates', label: 'Interest-rate sensitivity', long: 'UST10Y', short: 'UST2Y' },
+    { key: 'gold', label: 'Gold', long: 'GOLD-USD' },
+    { key: 'usd', label: 'US dollar', long: 'DOLLAR' },
   ],
   INR: [
-    { key: 'mkt', label: 'Indian market (Nifty 50)', long: 'NIFTYBEES.NS', excess: true },
-    { key: 'mid', label: 'Next-50 vs top-50 companies', long: 'JUNIORBEES.NS', short: 'NIFTYBEES.NS' },
-    { key: 'banks', label: 'Banks vs market', long: 'BANKBEES.NS', short: 'NIFTYBEES.NS' },
-    { key: 'ustech', label: 'US tech vs Indian market', long: 'MON100.NS', short: 'NIFTYBEES.NS' },
-    { key: 'gold', label: 'Gold', long: 'GOLDBEES.NS' },
-    { key: 'usd', label: 'US dollar vs rupee', long: 'USDINR' },
+    { key: 'mkt', label: 'Indian market (Nifty 50)', long: 'NIFTY50', excess: true },
+    { key: 'size', label: 'Small vs large companies', long: 'SMALLCAP250', short: 'NIFTY50' },
+    { key: 'value', label: 'Value vs market', long: 'VALUE20', short: 'NIFTY50' },
+    { key: 'mom', label: 'Momentum vs market', long: 'MOMENTUM30', short: 'NIFTY50' },
+    { key: 'rates', label: 'Interest-rate sensitivity', long: 'GILT10Y', short: 'CASH-INR' },
+    { key: 'gold', label: 'Gold', long: 'GOLD-INR' },
+    { key: 'global', label: 'US stocks vs Indian market', long: 'SP500-INR', short: 'NIFTY50' },
   ],
 };
 
 export const SHOCKS: Record<Currency, { id: string; name: string; shock: number; summary: string }[]> = {
   USD: [
     {
-      id: 'SPY',
+      id: 'US-LARGE',
       name: 'US stocks fall 20%',
       shock: -0.2,
       summary: 'A typical bear-market decline in the S&P 500.',
     },
     {
-      id: 'TLT',
+      id: 'UST30Y',
       name: 'Interest rates jump',
       shock: -0.15,
       summary: 'Long-term Treasuries drop 15%, as in 2022.',
     },
     {
-      id: 'GLD',
+      id: 'GOLD-USD',
       name: 'Gold slumps 15%',
       shock: -0.15,
       summary: 'Gold loses its shine in a strong-dollar boom.',
@@ -62,17 +69,22 @@ export const SHOCKS: Record<Currency, { id: string; name: string; shock: number;
       shock: -0.5,
       summary: 'Bitcoin halves — it has done so several times.',
     },
-    { id: 'NIFTYBEES.NS', name: 'Indian stocks fall 20%', shock: -0.2, summary: 'A sharp Nifty sell-off.' },
+    { id: 'NIFTY50', name: 'Indian stocks fall 20%', shock: -0.2, summary: 'A sharp Nifty sell-off.' },
   ],
   INR: [
     {
-      id: 'NIFTYBEES.NS',
+      id: 'NIFTY50',
       name: 'Indian stocks fall 20%',
       shock: -0.2,
       summary: 'A sharp Nifty sell-off, like early 2020.',
     },
-    { id: 'SPY', name: 'US stocks fall 20%', shock: -0.2, summary: 'A US bear market, measured in rupees.' },
-    { id: 'GOLDBEES.NS', name: 'Gold slumps 15%', shock: -0.15, summary: 'Gold prices fall in rupee terms.' },
+    {
+      id: 'SP500-INR',
+      name: 'US stocks fall 20%',
+      shock: -0.2,
+      summary: 'A US bear market, measured in rupees.',
+    },
+    { id: 'GOLD-INR', name: 'Gold slumps 15%', shock: -0.15, summary: 'Gold prices fall in rupee terms.' },
     {
       id: 'USDINR',
       name: 'Rupee strengthens 10%',

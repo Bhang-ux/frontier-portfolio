@@ -118,7 +118,7 @@ export function AssetName({
       {sub && (
         <span className="flex items-center gap-1.5 truncate text-xs text-ink-3">
           <ClassDot cls={a.meta.assetClass} />
-          <span className="font-mono">{a.meta.symbol.replace('.NS', '')}</span>
+          <span className="font-mono">{a.meta.symbol}</span>
           <span>· {CLASS_LABEL[a.meta.assetClass]}</span>
         </span>
       )}
@@ -169,13 +169,21 @@ export function AssetPicker({
   const groups = new Map<string, AssetSnapshot[]>();
   for (const a of list) {
     const k =
-      a.meta.kind === 'stock'
-        ? `${a.meta.region === 'IN' ? 'Indian' : 'US'} stocks`
-        : a.meta.kind === 'crypto'
+      a.meta.kind === 'cash'
+        ? 'Cash'
+        : a.meta.assetClass === 'crypto'
           ? 'Crypto'
-          : a.meta.kind === 'cash'
-            ? 'Cash'
-            : `${a.meta.region === 'IN' ? 'Indian' : 'Global & US'} funds`;
+          : a.meta.assetClass === 'bond'
+            ? a.meta.currency === 'INR'
+              ? 'Indian bond funds'
+              : 'US Treasuries'
+            : a.meta.assetClass === 'commodity'
+              ? 'Gold & silver'
+              : a.meta.currency === 'INR'
+                ? a.meta.region === 'IN'
+                  ? 'Indian stock funds'
+                  : 'Global stock funds (₹)'
+                : 'US stocks';
     groups.set(k, [...(groups.get(k) ?? []), a]);
   }
   return (
@@ -219,9 +227,7 @@ export function AssetPicker({
                     >
                       <ClassDot cls={a.meta.assetClass} />
                       <span className="min-w-0 flex-1 truncate text-ink">{a.meta.short}</span>
-                      <span className="shrink-0 font-mono text-[11px] text-ink-3">
-                        {a.meta.symbol.replace('.NS', '')}
-                      </span>
+                      <span className="shrink-0 font-mono text-[11px] text-ink-3">{a.meta.symbol}</span>
                     </Command.Item>
                   ))}
                 </Command.Group>

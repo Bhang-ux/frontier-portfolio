@@ -337,7 +337,7 @@ function PortfolioView({ data }: { data: MarketData }) {
               </Link>
             }
           >
-            Add assets with the button above — try a broad index fund like the Nifty 50 or S&P 500 ETF to
+            Add assets with the button above — try a broad index fund like the Nifty 50 or US large caps to
             start.
           </EmptyState>
         </Card>
@@ -664,7 +664,7 @@ function Results({
             ariaLabel="Correlation matrix"
             rows={a.correlation.ids.map((id) => names.get(id)!)}
             cols={a.correlation.ids.map((id) => names.get(id)!)}
-            colLabels={a.correlation.ids.map((id) => data.assets.get(id)!.meta.symbol.replace('.NS', ''))}
+            colLabels={a.correlation.ids.map((id) => data.assets.get(id)!.meta.symbol)}
             values={a.correlation.matrix}
           />
         </ChartCard>
@@ -851,7 +851,8 @@ function Results({
                     : '.'}
                 </p>
                 <p className="text-xs text-ink-3">
-                  Factors are built from liquid ETF spreads so they update daily with the rest of the data.
+                  Indian factors are spreads between index funds and update daily; US style factors are
+                  Fama–French academic data, so the regression window ends at their latest print.
                 </p>
               </div>
             </div>

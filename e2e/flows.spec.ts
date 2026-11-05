@@ -18,9 +18,9 @@ test.describe('core user journeys', () => {
   test('adds an asset to the portfolio with the picker', async ({ page }) => {
     await page.goto('portfolio');
     await page.getByRole('button', { name: /Add asset/ }).click();
-    await page.getByPlaceholder('Type a name or ticker…').fill('Bitcoin');
-    await page.getByRole('option', { name: /Bitcoin/ }).click();
-    await expect(page.getByLabel('Weight of Bitcoin in percent')).toHaveValue('5');
+    await page.getByPlaceholder('Type a name or ticker…').fill('Solana');
+    await page.getByRole('option', { name: /Solana/ }).click();
+    await expect(page.getByLabel('Weight of Solana in percent')).toHaveValue('5');
   });
 
   test('optimizer draws the efficient frontier and proposes trades', async ({ page }) => {
@@ -34,10 +34,12 @@ test.describe('core user journeys', () => {
   test('command palette navigates to an asset', async ({ page }) => {
     await page.goto('./');
     await page.keyboard.press('Control+K');
-    await page.getByPlaceholder(/Search 100\+ assets/).fill('NVIDIA');
+    await page.getByPlaceholder(/Search funds/).fill('Defence');
     await page.keyboard.press('Enter');
-    await expect(page).toHaveURL(/asset\/NVDA/);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('NVIDIA');
+    await expect(page).toHaveURL(/asset\/DEFENCE/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      'Motilal Oswal Nifty India Defence Index Fund',
+    );
   });
 
   test('theme toggle switches between dark and light', async ({ page }) => {
@@ -55,13 +57,13 @@ test.describe('core user journeys', () => {
         c: 'USD',
         a: 1000,
         h: [
-          ['SPY', 0.7],
-          ['GLD', 0.3],
+          ['US-LARGE', 0.7],
+          ['GOLD-USD', 0.3],
         ],
       }),
     );
     await page.goto(`portfolio#p=${code}`);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Shared test');
-    await expect(page.getByLabel('Weight of S&P 500 in percent')).toHaveValue('70');
+    await expect(page.getByLabel('Weight of US Large Caps in percent')).toHaveValue('70');
   });
 });

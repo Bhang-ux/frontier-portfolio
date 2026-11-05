@@ -308,10 +308,14 @@ function analyze(req: AnalyzeRequest): AnalyzeResult {
   if (req.factors?.length && req.factorSeries?.length) {
     try {
       const fIds = req.factorSeries.map((f) => f.id);
-      const al = alignSeries(
-        [...req.assets.map((a) => toBase(a, req.base, req.fx)), ...req.factorSeries.map((f) => f.series)],
-        { start: p.dates[0] },
-      );
+      // End where every input still has real data: academic factors lag by
+      // weeks, and forward-filled zeros would bias the betas towards 0.
+      const inputs = [
+        ...req.assets.map((a) => toBase(a, req.base, req.fx)),
+        ...req.factorSeries.map((f) => f.series),
+      ];
+      const end = Math.min(...inputs.map((s) => s.dates[s.dates.length - 1]));
+      const al = alignSeries(inputs, { start: p.dates[0], end });
       const wk = returnsMatrix(resampleAligned(al, 'W').values);
       const y = wk.map((r) => r.slice(0, n).reduce((s, x, i) => s + x * w[i], 0));
       const col = (id: string) => wk.map((r) => r[n + fIds.indexOf(id)]);

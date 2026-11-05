@@ -2,9 +2,10 @@
 #
 #   schedule ─► fetch live market data ─► analyse ─► validate ─► build ─► deploy to Pages ─► smoke-test live site
 #
-# Runs hourly on weekdays (both Indian and US sessions) and every 4 hours on
-# weekends (crypto trades 24/7). If any upstream source fails, the pipeline
-# falls back to the previously deployed copy of that instrument; if the
+# Runs hourly on weekdays and every 4 hours on weekends (crypto trades 24/7).
+# Normal runs extend each fund's history from the previous deploy using AMFI's
+# one-file NAV list; a weekly run refetches every full history. If a source
+# fails, that instrument falls back to its previously deployed copy; if the
 # validation gate fails, nothing is deployed and the last good site stays live.
 name: Data refresh & deploy
 
@@ -12,10 +13,16 @@ on:
   schedule:
     - cron: '17 * * * 1-5'
     - cron: '47 */4 * * 0,6'
+    - cron: '29 2 * * 0' # weekly full refresh
   push:
     branches: [main]
     paths-ignore: ['**.md', 'docs/**']
   workflow_dispatch:
+    inputs:
+      full_refresh:
+        description: Refetch every full history instead of extending the previous deploy
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -51,6 +58,7 @@ jobs:
         id: data
         env:
           SITE_URL: ${{ steps.site.outputs.url }}
+          FULL_REFRESH: ${{ (github.event.schedule == '29 2 * * 0' || inputs.full_refresh) && '1' || '' }}
         run: |
           export NEXT_REFRESH="$(date -u -d '+1 hour' +%Y-%m-%dT%H:17:00Z)"
           npm run data   # SITE_URL enables the previous-deploy fallback per instrument
@@ -96,7 +104,7 @@ jobs:
             echo "waiting for CDN ($got != $EXPECTED)…"; sleep 10
           done
           [ "$got" = "$EXPECTED" ] || { echo "::warning::CDN still serving an older manifest after 3 minutes"; }
-          for path in "" "optimize/" "portfolio/" "asset/SPY/" "data/snapshot.json"; do
+          for path in "" "optimize/" "portfolio/" "asset/NIFTY50/" "data/snapshot.json"; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$url/$path")
             echo "$code  /$path"
             [ "$code" = "200" ] || { echo "::error::/$path returned $code"; exit 1; }
