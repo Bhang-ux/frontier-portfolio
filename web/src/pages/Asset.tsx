@@ -11,6 +11,7 @@ import {
   CLASS_LABEL,
   REGION_LABEL,
   SIGNAL_LABEL,
+  fmtAsOf,
   fmtChange,
   fmtPrice,
   number,
@@ -159,9 +160,7 @@ function AssetView({ a }: { a: AssetSnapshot }) {
             ) : (
               <Delta value={change} className="text-[16px]" suffix={live ? ' 24h' : ''} />
             )}
-            <span className="text-xs text-ink-3">
-              as of {new Date(live ? live.ts : a.quote.asOf).toLocaleString()}
-            </span>
+            <span className="text-xs text-ink-3">as of {fmtAsOf(live ? live.ts : a.quote.asOf)}</span>
           </div>
         </div>
         {a.meta.investable && (

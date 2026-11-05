@@ -68,6 +68,26 @@ export const tone = (x: number | null | undefined) =>
       ? 'text-pos'
       : 'text-neg';
 
+/**
+ * "as of" label for a quote: end-of-day prints (NAVs, FRED closes) carry a
+ * date but no meaningful time, so they are shown as a date in UTC terms.
+ */
+export function fmtAsOf(iso: string | number): string {
+  if (typeof iso === 'string' && /T00:00:00(\.000)?Z$/.test(iso))
+    return new Date(iso).toLocaleDateString(undefined, {
+      timeZone: 'UTC',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  return new Date(iso).toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function timeAgo(iso: string | number, now = Date.now()): string {
   const t = typeof iso === 'number' ? iso : Date.parse(iso);
   const s = Math.max(0, Math.round((now - t) / 1000));
