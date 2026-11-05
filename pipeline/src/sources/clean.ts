@@ -107,6 +107,17 @@ export function inrToUsd(series: Series, usdinr: Series): Series {
   return convertSeries(series, usdinr, 'divide');
 }
 
+/** Express an asset priced in USD in INR (multiply by USDINR as of each date). */
+export function usdToInr(series: Series, usdinr: Series): Series {
+  return convertSeries(series, usdinr, 'multiply');
+}
+
+/** Rescale a series so its first value is `base` (returns unchanged). */
+export function rebase(s: Series, base = 100): Series {
+  const k = base / s.values[0];
+  return { dates: s.dates, values: s.values.map((v) => v * k) };
+}
+
 /** Turn daily simple returns (fractions) into a level index starting at `base`. */
 export function levelFromReturns(dates: number[], returns: number[], base = 100): Series {
   const values: number[] = [];

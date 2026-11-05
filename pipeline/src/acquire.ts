@@ -19,7 +19,7 @@ import { fetchFredSeries } from './sources/fred';
 import { FRENCH_FILES, fetchFrenchDaily, type FactorTable } from './sources/french';
 import { fetchPreviousHistory } from './sources/previous';
 import { syntheticUniverse } from './sources/synthetic';
-import { inrToUsd, levelFromReturns, spliceBackfill } from './sources/clean';
+import { inrToUsd, levelFromReturns, rebase, spliceBackfill, usdToInr } from './sources/clean';
 import { bondIndexFromYields } from './build/bonds';
 import { ALL_ASSETS, INTRADAY_IDS, SOURCES, UNIVERSE, byId, type SourceSpec } from './universe';
 import type { LoadedAsset, Universe } from './build/types';
@@ -194,10 +194,22 @@ export async function acquire(o: AcquireOptions): Promise<Acquired> {
     const end = series.dates[series.dates.length - 1];
     if (latest && latest.day > end)
       series = { dates: [...series.dates, latest.day], values: [...series.values, latest.nav] };
+    const reuse = !o.fullRefresh && prev && prev.dates[0] < series.dates[0] - 30;
     if (spec.backfill) {
-      const reuse = !o.fullRefresh && prev && prev.dates[0] < series.dates[0] - 30;
       const back = reuse ? prev : (await amfiLimit(() => fetchNavHistory(spec.backfill!))).series;
       series = spliceBackfill(series, back);
+    } else if (spec.backfillUs === 'french-mkt') {
+      try {
+        let back = reuse ? prev : null;
+        if (!back) {
+          const fx = await load('USDINR');
+          if (!fx) throw new Error('needs USDINR');
+          back = usdToInr(await frenchMarket(), fx.series);
+        }
+        series = spliceBackfill(series, back);
+      } catch (e) {
+        o.log(`  ⚠ ${id}: no backfill (${(e as Error).message})`);
+      }
     }
     return { series, source: 'amfi' };
   }
@@ -269,18 +281,9 @@ export async function acquire(o: AcquireOptions): Promise<Acquired> {
       case 'inr-to-usd': {
         const [inr, fx] = await Promise.all([load(spec.from), load('USDINR')]);
         if (!inr || !fx) throw new Error(`needs ${spec.from} and USDINR`);
-        let series = inrToUsd(inr.series, fx.series);
-        if (spec.backfill === 'french-mkt') {
-          const prev = await previous(id);
-          try {
-            const back =
-              !o.fullRefresh && prev && prev.dates[0] < series.dates[0] - 30 ? prev : await frenchMarket();
-            series = spliceBackfill(series, back);
-          } catch (e) {
-            o.log(`  ⚠ ${id}: no backfill (${(e as Error).message})`);
-          }
-        }
-        return { series, source: 'derived' };
+        const i0 = lowerBound(inr.series.dates, start);
+        const sliced = { dates: inr.series.dates.slice(i0), values: inr.series.values.slice(i0) };
+        return { series: rebase(inrToUsd(sliced, fx.series)), source: 'derived' };
       }
     }
   }

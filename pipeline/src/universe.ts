@@ -17,10 +17,13 @@
 import type { AssetMeta } from '@frontier/contracts';
 
 export type SourceSpec =
-  /** AMFI scheme NAV, optionally chain-linked to an older (Regular-plan) scheme. */
-  | { type: 'amfi'; code: number; backfill?: number }
-  /** An INR fund re-expressed in USD; history before launch from a backfill instrument. */
-  | { type: 'inr-to-usd'; from: string; backfill?: 'french-mkt' }
+  /**
+   * AMFI scheme NAV, optionally chain-linked to an older (Regular-plan) scheme,
+   * or — for US-equity funds — to the Fama–French US market return in rupees.
+   */
+  | { type: 'amfi'; code: number; backfill?: number; backfillUs?: 'french-mkt' }
+  /** An INR fund re-expressed in USD (rebased to 100 at its first date). */
+  | { type: 'inr-to-usd'; from: string }
   | { type: 'fred'; series: string }
   /** Constant-maturity Treasury total-return index modelled from FRED yields. */
   | { type: 'bond'; series: string; maturity: number }
@@ -47,24 +50,27 @@ const fund = (
   d: Omit<Def, 'kind' | 'currency' | 'src' | 'provenance'> & {
     code: number;
     backfill?: number;
+    backfillUs?: 'french-mkt';
     fundName: string;
     currency?: 'INR';
   },
 ): Def => {
-  const { code, backfill, fundName, ...rest } = d;
+  const { code, backfill, backfillUs, fundName, ...rest } = d;
+  const notes = [
+    backfill &&
+      ` Before the Direct plan existed (2013) the history uses the Regular plan (scheme ${backfill}), chain-linked — about 0.5–1 % a year more in fees.`,
+    backfillUs &&
+      ' Before the fund launched (April 2020) the history is the Fama–French US stock-market return converted to rupees.',
+  ].filter(Boolean);
   return {
     kind: 'fund',
     currency: 'INR',
     benchmark: 'NIFTY50',
     ...rest,
-    src: { type: 'amfi', code, backfill },
+    src: { type: 'amfi', code, backfill, backfillUs },
     provenance: {
-      provider: 'AMFI',
-      detail: `Daily NAV of ${fundName} — Direct Plan, Growth (AMFI scheme ${code}).${
-        backfill
-          ? ` Before the Direct plan existed (2013) the history uses the Regular plan (scheme ${backfill}), chain-linked — about 0.5–1 % a year more in fees.`
-          : ''
-      }`,
+      provider: backfillUs ? 'AMFI · Fama–French · FRED' : 'AMFI',
+      detail: `Daily NAV of ${fundName} — Direct Plan, Growth (AMFI scheme ${code}).${notes.join('')}`,
       url: AMFI_URL,
     },
   };
@@ -334,6 +340,7 @@ const DEFS: Def[] = [
     short: 'S&P 500 (₹)',
     fundName: 'Motilal Oswal S&P 500 Index Fund',
     code: 148381,
+    backfillUs: 'french-mkt',
     assetClass: 'equity',
     region: 'US',
     description:
@@ -420,7 +427,7 @@ const DEFS: Def[] = [
     symbol: 'US500',
     name: 'US Large Caps (S&P 500 index fund, in USD)',
     short: 'US Large Caps',
-    kind: 'fund',
+    kind: 'index',
     assetClass: 'equity',
     region: 'US',
     currency: 'USD',
@@ -428,11 +435,11 @@ const DEFS: Def[] = [
       'The 500 largest US companies — the backbone of global investing. Hold it through any low-cost S&P 500 index fund.',
     role: 'Core growth engine',
     benchmark: 'US-LARGE',
-    src: { type: 'inr-to-usd', from: 'SP500-INR', backfill: 'french-mkt' },
+    src: { type: 'inr-to-usd', from: 'SP500-INR' },
     provenance: {
       provider: 'AMFI · FRED · ECB · Fama–French',
       detail:
-        'Daily NAV of the Motilal Oswal S&P 500 Index Fund (AMFI 148381) converted to dollars at the FRED/ECB USD-INR rate, so it includes dividends net of fund costs. Before the fund launched (April 2020) the history uses the Fama–French US stock-market return.',
+        'An index (first day = 100) built from the daily NAV of the Motilal Oswal S&P 500 Index Fund (AMFI 148381) converted to dollars at the FRED/ECB USD-INR rate, so it includes dividends net of fund costs. Before the fund launched (April 2020) it follows the Fama–French US stock-market return.',
       url: 'https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html',
     },
   },
@@ -441,7 +448,7 @@ const DEFS: Def[] = [
     symbol: 'NDX',
     name: 'US Tech Giants (Nasdaq-100 fund, in USD)',
     short: 'US Tech (Nasdaq-100)',
-    kind: 'fund',
+    kind: 'index',
     assetClass: 'equity',
     region: 'US',
     currency: 'USD',
@@ -454,7 +461,7 @@ const DEFS: Def[] = [
     provenance: {
       provider: 'AMFI · FRED · ECB',
       detail:
-        'Daily NAV of the Motilal Oswal Nasdaq 100 Fund of Fund (AMFI 145552) converted to dollars at the FRED/ECB USD-INR rate.',
+        'An index (first day = 100) built from the daily NAV of the Motilal Oswal Nasdaq 100 Fund of Fund (AMFI 145552) converted to dollars at the FRED/ECB USD-INR rate.',
       url: AMFI_URL,
     },
   },
