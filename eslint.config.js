@@ -11,7 +11,6 @@ export default tseslint.config(
       '**/coverage/**',
       '**/node_modules/**',
       'web/public/**',
-      'docs/interview-guide/out/**',
       'playwright-report/**',
       'test-results/**',
       '**/.venv/**',

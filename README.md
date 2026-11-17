@@ -8,15 +8,12 @@
 Live market data · autonomous refresh · runs entirely in your browser · zero servers, zero cost.
 
 [**▶ Open the live app**](https://bhang-ux.github.io/frontier-portfolio/) ·
-[Interview guide (PDF)](docs/Interview_Guide.pdf) ·
 [How it works](#how-it-works)
 
 [![Data refresh & deploy](https://github.com/Bhang-ux/frontier-portfolio/actions/workflows/deploy.yml/badge.svg)](https://github.com/Bhang-ux/frontier-portfolio/actions/workflows/deploy.yml)
 [![CI](https://github.com/Bhang-ux/frontier-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/Bhang-ux/frontier-portfolio/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Bhang-ux/frontier-portfolio/actions/workflows/codeql.yml/badge.svg)](https://github.com/Bhang-ux/frontier-portfolio/actions/workflows/codeql.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
-
-<img src="docs/screenshots/today.jpg" alt="Frontier — Today dashboard" width="100%" />
 
 </div>
 
@@ -36,15 +33,6 @@ Frontier gives a complete beginner the toolkit of a quant desk — and tells the
 | 🌍 **Today & Markets** | Plain-English market briefing, live crypto & gold stream, HMM market regimes (calm vs turbulent), a transparent Market Mood gauge, breadth, an India-first market map (size, sectors, strategies), cross-asset scoreboard and a 45-instrument screener with trend & momentum scores.                                                                                                                                                  |
 
 Every chart is accessible (keyboard crosshair, table view, colour-blind-safe validated palette) and works in light and dark themes, on desktop and mobile. **Beginner / Pro** mode switches between explanations and density.
-
-<p>
-<img src="docs/screenshots/optimizer.jpg" width="49%" alt="Optimizer with efficient frontier" />
-<img src="docs/screenshots/portfolio.jpg" width="49%" alt="Portfolio analytics" />
-</p>
-<p>
-<img src="docs/screenshots/advisor.jpg" width="49%" alt="Beginner advisor" />
-<img src="docs/screenshots/planner.jpg" width="49%" alt="Monte Carlo planner" />
-</p>
 
 ## How it works
 
@@ -111,8 +99,6 @@ Validated by **golden tests** against scikit-learn, PyPortfolioOpt, CVXPY (Clara
 | Forecast-free model portfolios               | Expected returns are the noisiest input; beginners get allocation by risk budget, not last decade's winners.               |
 | Web Worker + React Query                     | Heavy maths off the main thread; worker calls are cached and de-duplicated like network requests.                          |
 
-The full reasoning, trade-offs and 20 interview questions are in [`docs/Interview_Guide.pdf`](docs/Interview_Guide.pdf).
-
 ## Run it locally
 
 ```bash
@@ -127,7 +113,6 @@ With internet access, `npm run data` fetches **live** data instead (`--full-refr
 npm run verify           # typecheck + lint + all unit/golden/pipeline tests
 npm run build && npx playwright test   # production build + end-to-end tests
 python tools/reference/generate_fixtures.py   # regenerate golden fixtures (needs tools/reference/requirements.txt)
-npm run guide            # rebuild docs/Interview_Guide.pdf
 ```
 
 ## Project layout
@@ -139,8 +124,7 @@ pipeline             scheduled ETL: sources, analytics, validation, publishing
 web                  React 19 + Vite 7 + Tailwind 4 app, Web Worker, charts
 e2e                  Playwright journeys (desktop + mobile)
 tools                Python reference generator, screenshot tool, source probe, data report
-.github/workflows    CI · data refresh & deploy · CodeQL · screenshots · keepalive · pipeline dry run
-docs                 interview guide (PDF + generator), screenshots
+.github/workflows    CI · data refresh & deploy · CodeQL · keepalive · pipeline dry run
 ```
 
 ## Testing

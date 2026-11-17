@@ -5,7 +5,7 @@
 import { chromium } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 
-const out = process.argv[2] ?? 'docs/screenshots';
+const out = process.argv[2] ?? 'screenshots';
 const base = process.argv[3] ?? 'http://localhost:4173/frontier-portfolio/';
 await mkdir(out, { recursive: true });
 

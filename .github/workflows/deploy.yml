@@ -16,7 +16,7 @@ on:
     - cron: '29 2 * * 0' # weekly full refresh
   push:
     branches: [main]
-    paths-ignore: ['**.md', 'docs/**']
+    paths-ignore: ['**.md']
   workflow_dispatch:
     inputs:
       full_refresh:

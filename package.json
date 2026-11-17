@@ -27,7 +27,6 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "e2e": "playwright test",
-    "guide": "node docs/interview-guide/build.mjs",
     "verify": "npm run typecheck && npm run lint && npm run test"
   },
   "devDependencies": {

@@ -21,6 +21,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for wf in deploy.yml screenshots.yml maintenance.yml; do
+          for wf in deploy.yml maintenance.yml; do
             gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/enable" && echo "✓ ${wf} enabled"
           done
